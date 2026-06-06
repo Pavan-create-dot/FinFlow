@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  passwordHash  String
+  firstName     String?
+  lastName      String?
+  baseCurrency  String         @default("INR")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  
+  statements    Statement[]
+  transactions  Transaction[]
+  categories    UserCategory[]
+}
+
+model Statement {
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  fileName      String
+  fileUrl       String?   // Location in S3/Local
+  bankName      String?
+  status        String    @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
+  errorMessage  String?
+  createdAt     DateTime  @default(now())
+  
+  transactions  Transaction[]
+}
+
+model Transaction {
+  id              String    @id @default(uuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id])
+  statementId     String?
+  statement       Statement? @relation(fields: [statementId], references: [id])
+  
+  date            DateTime
+  amount          BigInt    // Stored in paise/cents
+  description     String
+  originalText    String    // Raw string from PDF
+  merchantName    String?
+  isSubscription  Boolean   @default(false)
+  type            String    // INCOME, EXPENSE
+  
+  categoryId      String?
+  category        Category? @relation(fields: [categoryId], references: [id])
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([userId, date])
+  @@index([categoryId])
+}
+
+model Category {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  icon        String?
+  color       String?
+  isSystem    Boolean  @default(true) // Pre-defined categories
+  
+  transactions Transaction[]
+  userCategories UserCategory[]
+}
+
+model UserCategory {
+  userId      String
+  categoryId  String
+  user        User     @relation(fields: [userId], references: [id])
+  category    Category @relation(fields: [categoryId], references: [id])
+
+  @@id([userId, categoryId])
+}
