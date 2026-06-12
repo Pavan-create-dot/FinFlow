@@ -1,9 +1,8 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { generateTokens } from '../middlewares/auth';
-
-const prisma = new PrismaClient();
+import { prisma } from '../lib/prisma';
+import { logger } from '../utils/logger';
 
 export const register = async (req: Request, res: Response) => {
   const { email, password, firstName, lastName } = req.body;
@@ -31,6 +30,10 @@ export const register = async (req: Request, res: Response) => {
 export const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password are required' });
+  }
+
   try {
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
@@ -42,7 +45,7 @@ export const login = async (req: Request, res: Response) => {
     const tokens = generateTokens({ id: user.id, email: user.email });
     return res.json({ user: safeUser, ...tokens });
   } catch (error) {
-    console.error('Login Error:', error);
+    logger.error(error, 'Login Error');
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 };

@@ -1,8 +1,8 @@
 import { Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { AIService } from '../services/aiService';
-
-const prisma = new PrismaClient();
+import { decrypt } from '../utils/encryption';
+import { prisma } from '../lib/prisma';
+import { logger } from '../utils/logger';
 
 export const getFinancialInsights = async (req: any, res: Response) => {
   try {
@@ -29,13 +29,15 @@ export const getFinancialInsights = async (req: any, res: Response) => {
     // Convert BigInt to Number for JSON
     const serializedData = transactions.map(t => ({
       ...t,
+      description: decrypt(t.description) || '',
+      merchantName: t.merchantName ? decrypt(t.merchantName) || null : null,
       amount: Number(t.amount) / 100 // Convert paise to currency
     }));
 
     const insights = await AIService.generateInsights(serializedData);
     return res.json(insights);
   } catch (error) {
-    console.error('Insights API Error:', error);
+    logger.error(error, 'Insights API Error');
     return res.status(500).json({ error: 'Failed to generate insights' });
   }
 };

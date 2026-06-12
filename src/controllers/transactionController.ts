@@ -1,8 +1,15 @@
 import { Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { serializePrisma } from '../utils/serializer';
+import { decrypt } from '../utils/encryption';
+import { prisma } from '../lib/prisma';
+import { logger } from '../utils/logger';
 
-const prisma = new PrismaClient();
+const decryptTransaction = (transaction: any) => ({
+  ...transaction,
+  description: decrypt(transaction.description) || '',
+  merchantName: transaction.merchantName ? decrypt(transaction.merchantName) || null : null,
+  originalText: decrypt(transaction.originalText) || '',
+});
 
 export const getTransactions = async (req: any, res: Response) => {
   const userId = req.user.id;
@@ -28,9 +35,9 @@ export const getTransactions = async (req: any, res: Response) => {
       include: { category: true }
     });
 
-    return res.json(serializePrisma(transactions));
+    return res.json(serializePrisma(transactions.map(decryptTransaction)));
   } catch (error) {
-    console.error('Fetch Transactions Error:', error);
+    logger.error(error, 'Fetch Transactions Error');
     return res.status(500).json({ error: 'Failed to fetch transactions' });
   }
 };
@@ -86,7 +93,7 @@ export const getAggregates = async (req: any, res: Response) => {
 
     return res.json(serializePrisma({ ...totals, categories }));
   } catch (error) {
-    console.error('Fetch Analytics Summary Error:', error);
+    logger.error(error, 'Fetch Analytics Summary Error');
     return res.status(500).json({ error: 'Failed to fetch analytics summary' });
   }
 };
@@ -123,9 +130,9 @@ export const updateTransaction = async (req: any, res: Response) => {
       include: { category: true },
     });
 
-    return res.json(serializePrisma(updated));
+    return res.json(serializePrisma(decryptTransaction(updated)));
   } catch (error) {
-    console.error('Update Transaction Error:', error);
+    logger.error(error, 'Update Transaction Error');
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 };
@@ -137,7 +144,7 @@ export const getCategories = async (req: any, res: Response) => {
     });
     return res.json(categories);
   } catch (error) {
-    console.error('Fetch Categories Error:', error);
+    logger.error(error, 'Fetch Categories Error');
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 };

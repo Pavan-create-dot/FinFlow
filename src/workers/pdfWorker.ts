@@ -1,12 +1,12 @@
 import 'dotenv/config';
+import '../config/env';
 import { Worker, Job } from 'bullmq';
-import { PrismaClient } from '@prisma/client';
 import pdf from 'pdf-parse';
 import fs from 'fs';
 import { AIService } from '../services/aiService';
 import { encrypt } from '../utils/encryption';
-
-const prisma = new PrismaClient();
+import { prisma } from '../lib/prisma';
+import { logger } from '../utils/logger';
 
 interface PDFJobData {
   statementId: string;
@@ -71,7 +71,7 @@ export const pdfWorker = new Worker(
       }
 
     } catch (error: any) {
-      console.error(`Worker failed at job ${job.id}:`, error);
+      logger.error(error, `Worker failed at job ${job.id}`);
       await prisma.statement.update({
         where: { id: statementId },
         data: { 
@@ -90,4 +90,15 @@ export const pdfWorker = new Worker(
   }
 );
 
-console.log('PDF Processing Worker active and listening to Redis queue...');
+logger.info('PDF Processing Worker active and listening to Redis queue...');
+
+const shutdown = async (signal: string) => {
+  logger.info(`Received ${signal}. Shutting down worker...`);
+  await pdfWorker.close();
+  await prisma.$disconnect();
+  logger.info('Worker disconnected from Redis and Prisma.');
+  process.exit(0);
+};
+
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));
