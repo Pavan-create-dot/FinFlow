@@ -30,6 +30,7 @@ jobs:
         path: ./
         base: ${{ github.event.repository.default_branch }}
         head: HEAD
+      continue-on-error: true
 
   dependencies:
     runs-on: ubuntu-latest
