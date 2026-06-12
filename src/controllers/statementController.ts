@@ -1,11 +1,11 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { Queue } from 'bullmq';
 import { serializePrisma } from '../utils/serializer';
 import { encrypt, decrypt } from '../utils/encryption';
+import { prisma } from '../lib/prisma';
+import { logger } from '../utils/logger';
 
-const prisma = new PrismaClient();
-const pdfQueue = new Queue('pdf-processing', {
+export const pdfQueue = new Queue('pdf-processing', {
   connection: {
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT || '6379'),
@@ -53,7 +53,7 @@ export const uploadStatement = async (req: any, res: Response) => {
       statementId: statement.id,
     });
   } catch (error) {
-    console.error('Upload Error:', error);
+    logger.error(error, 'Upload Error');
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 };
@@ -75,7 +75,7 @@ export const getStatements = async (req: any, res: Response) => {
 
     return res.json(serializePrisma(decryptedStatements));
   } catch (error) {
-    console.error('Fetch Statements Error:', error);
+    logger.error(error, 'Fetch Statements Error');
     return res.status(500).json({ error: 'Failed to fetch statements' });
   }
 };

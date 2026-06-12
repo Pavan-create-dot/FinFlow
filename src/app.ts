@@ -1,14 +1,16 @@
-import 'dotenv/config';
+import './config/env';
 import express from 'express';
-import multer from 'multer';
 import helmet from 'helmet';
 import cors from 'cors';
-import rateLimit from 'express-rate-limit';
-import { register, login } from './controllers/authController';
-import { uploadStatement, getStatements } from './controllers/statementController';
-import { getTransactions, getAggregates, updateTransaction, getCategories } from './controllers/transactionController';
-import { getFinancialInsights } from './controllers/aiController';
-import { authenticateJWT } from './middlewares/auth';
+import authRoutes from './routes/authRoutes';
+import statementRoutes from './routes/statementRoutes';
+import transactionRoutes from './routes/transactionRoutes';
+import aiRoutes from './routes/aiRoutes';
+import { errorHandler } from './middlewares/errorHandler';
+import { notFoundHandler } from './middlewares/notFound';
+import { logger } from './utils/logger';
+import { prisma } from './lib/prisma';
+import { pdfQueue } from './controllers/statementController';
 
 const app = express();
 app.use(helmet());
@@ -21,33 +23,59 @@ app.use(cors({
 
 app.use(express.json());
 
-const upload = multer({ dest: 'uploads/' });
-
-// Rate limiter for auth endpoints — max 20 requests per 15 minutes per IP
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 20,
-  message: { error: 'Too many requests, please try again later.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
 app.get('/', (req, res) => {
   res.json({ status: 'FinFlow API is healthy', version: '1.0.0' });
 });
 
-// Public Routes (rate-limited)
-app.post('/api/v1/auth/register', authLimiter, register);
-app.post('/api/v1/auth/login', authLimiter, login);
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
 
-// Protected Routes
-app.post('/api/v1/statements/upload', authenticateJWT, upload.single('statement'), uploadStatement);
-app.get('/api/v1/statements', authenticateJWT, getStatements);
-app.get('/api/v1/transactions', authenticateJWT, getTransactions);
-app.patch('/api/v1/transactions/:id', authenticateJWT, updateTransaction);
-app.get('/api/v1/categories', authenticateJWT, getCategories);
-app.get('/api/v1/analytics/summary', authenticateJWT, getAggregates);
-app.get('/api/v1/ai/insights', authenticateJWT, getFinancialInsights);
+// Routes
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/statements', statementRoutes);
+app.use('/api/v1', transactionRoutes);
+app.use('/api/v1/ai', aiRoutes);
+
+// 404 & Error Handling
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`FinFlow Backend Live on ${PORT}`));
+let server: any;
+
+if (process.env.NODE_ENV !== 'test') {
+  server = app.listen(PORT, () => logger.info(`FinFlow Backend Live on ${PORT}`));
+
+  // Graceful Shutdown
+  const shutdown = async (signal: string) => {
+    logger.info(`Received ${signal}. Shutting down gracefully...`);
+    
+    // Close the server to stop accepting new requests
+    server.close(async () => {
+      logger.info('HTTP server closed.');
+      
+      try {
+        await pdfQueue.close();
+        logger.info('BullMQ Queue closed.');
+        await prisma.$disconnect();
+        logger.info('Prisma disconnected.');
+        process.exit(0);
+      } catch (err) {
+        logger.error(err, 'Error during graceful shutdown');
+        process.exit(1);
+      }
+    });
+    
+    // Force close after 10s
+    setTimeout(() => {
+      logger.error('Could not close connections in time, forcefully shutting down');
+      process.exit(1);
+    }, 10000);
+  };
+
+  process.on('SIGINT', () => shutdown('SIGINT'));
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+}
+
+export { app };

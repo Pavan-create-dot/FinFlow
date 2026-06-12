@@ -57,16 +57,11 @@ jobs:
     - name: Generate Prisma Client
       run: npx prisma generate
 
-    - name: Lint TypeScript
-      run: npx tsc --noEmit
-      continue-on-error: true
+    - name: Lint Codebase
+      run: npm run lint
 
-    - name: Check for syntax errors
-      run: npm run build 2>/dev/null || true
-      continue-on-error: true
-
-    - name: Verify API startup
-      run: timeout 5 npm run dev || true
+    - name: Run Tests
+      run: npm run test
       env:
         DATABASE_URL: postgresql://test_user:test_pass@localhost:5432/finflow_test
         REDIS_HOST: localhost
@@ -76,3 +71,6 @@ jobs:
         GEMINI_API_KEY: test_key
         ENCRYPTION_SECRET: abcdefghijklmnopqrstuvwxyz123456
         PORT: 3000
+
+    - name: Build Application
+      run: npm run build
