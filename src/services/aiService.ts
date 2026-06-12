@@ -22,6 +22,14 @@ export class AIService {
     generationConfig: JSON_CONFIG
   });
 
+  private static normalizeExtractionResult(data: unknown): any[] {
+    if (Array.isArray(data)) return data;
+    if (data && typeof data === 'object' && Array.isArray((data as { transactions?: unknown }).transactions)) {
+      return (data as { transactions: any[] }).transactions;
+    }
+    return [];
+  }
+
   /**
    * Fallback: Extract transactions using regex patterns (no AI)
    */
@@ -130,7 +138,8 @@ export class AIService {
     try {
       const result = await this.model.generateContent(prompt);
       const response = result.response;
-      return JSON.parse(response.text());
+      const parsed = this.normalizeExtractionResult(JSON.parse(response.text()));
+      return parsed.length > 0 ? parsed : this.extractTransactionsFallback(text);
     } catch (error) {
       console.error('AI Extraction Error (falling back to parser):', error);
       // Use fallback extraction method

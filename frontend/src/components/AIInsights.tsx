@@ -41,6 +41,8 @@ export const AIInsights: React.FC = () => {
           <div className="skeleton-line"></div>
           <div className="skeleton-line"></div>
         </div>
+      ) : insights?.message ? (
+        <p style={{ color: 'var(--text-secondary)' }}>{insights.message}</p>
       ) : insights ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div className="insight-item">
