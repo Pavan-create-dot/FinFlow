@@ -31,32 +31,7 @@ services:
       - key: FRONTEND_URL
         sync: false
 
-  # 2. BullMQ PDF Processing Worker (Background Service)
-  - type: worker
-    name: finflow-worker
-    runtime: docker
-    dockerfilePath: Dockerfile
-    dockerContext: .
-    dockerCommand: node dist/workers/pdfWorker.js
-    plan: free
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: REDIS_URL
-        fromService:
-          type: redis
-          name: finflow-redis
-          property: connectionString
-      - key: DATABASE_URL
-        fromDatabase:
-          name: finflow-db
-          property: connectionString
-      - key: GEMINI_API_KEY
-        sync: false
-      - key: ENCRYPTION_SECRET
-        sync: false
-
-  # 3. Managed Redis Instance
+  # 2. Managed Redis Instance
   - type: redis
     name: finflow-redis
     plan: free
