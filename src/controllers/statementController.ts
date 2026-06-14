@@ -6,10 +6,12 @@ import { prisma } from '../lib/prisma';
 import { logger } from '../utils/logger';
 
 export const pdfQueue = new Queue('pdf-processing', {
-  connection: {
-    host: process.env.REDIS_HOST || 'localhost',
-    port: parseInt(process.env.REDIS_PORT || '6379'),
-  },
+  connection: (process.env.REDIS_URL
+    ? process.env.REDIS_URL
+    : {
+        host: process.env.REDIS_HOST || 'localhost',
+        port: parseInt(process.env.REDIS_PORT || '6379'),
+      }) as any,
 });
 
 export const uploadStatement = async (req: any, res: Response) => {

@@ -6,6 +6,7 @@
     "start": "node dist/app.js",
     "dev": "ts-node-dev --respawn src/app.ts",
     "worker": "npx ts-node src/workers/pdfWorker.ts",
+    "worker:prod": "node dist/workers/pdfWorker.js",
     "generate": "prisma generate",
     "db:push": "prisma db push",
     "build": "tsc",

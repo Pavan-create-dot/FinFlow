@@ -1,0 +1,57 @@
+services:
+  # 1. Express API Web Service
+  - type: web
+    name: finflow-api
+    runtime: docker
+    dockerfilePath: Dockerfile
+    plan: free
+    envVars:
+      - key: PORT
+        value: 3000
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: finflow-redis
+          property: connectionString
+      - key: DATABASE_URL
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: ENCRYPTION_SECRET
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+
+  # 2. BullMQ Background Worker Service
+  - type: worker
+    name: finflow-worker
+    runtime: docker
+    dockerfilePath: Dockerfile
+    dockerCommand: npm run worker:prod
+    plan: free
+    envVars:
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: finflow-redis
+          property: connectionString
+      - key: DATABASE_URL
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: ENCRYPTION_SECRET
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        sync: false
+      - key: JWT_REFRESH_SECRET
+        sync: false
+
+# 3. Managed Redis Instance
+redis:
+  name: finflow-redis
+  plan: free
+  ipAllowList: []
