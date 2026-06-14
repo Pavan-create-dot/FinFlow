@@ -26,8 +26,14 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 
+# Copy entrypoint script
+COPY docker-entrypoint.sh ./docker-entrypoint.sh
+RUN chmod +x ./docker-entrypoint.sh
+
 # Expose default API port
 EXPOSE 3000
 
+# Set entrypoint to run migrations then start app
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 # Default command (starts both API and Worker concurrently via start.js)
 CMD ["node", "dist/start.js"]
