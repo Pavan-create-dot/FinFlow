@@ -4,17 +4,22 @@ services:
     name: finflow-api
     runtime: docker
     dockerfilePath: Dockerfile
+    dockerContext: .
     plan: free
     envVars:
       - key: PORT
         value: 3000
+      - key: NODE_ENV
+        value: production
       - key: REDIS_URL
         fromService:
           type: redis
           name: finflow-redis
           property: connectionString
       - key: DATABASE_URL
-        sync: false
+        fromDatabase:
+          name: finflow-db
+          property: connectionString
       - key: GEMINI_API_KEY
         sync: false
       - key: JWT_ACCESS_SECRET
@@ -26,8 +31,13 @@ services:
       - key: FRONTEND_URL
         sync: false
 
-  # 3. Managed Redis Instance
+  # 2. Managed Redis Instance
   - type: redis
     name: finflow-redis
+    plan: free
+    ipAllowList: []
+
+databases:
+  - name: finflow-db
     plan: free
     ipAllowList: []

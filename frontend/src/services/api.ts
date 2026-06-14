@@ -1,6 +1,13 @@
 import axios from 'axios';
 
-const API_BASE = (import.meta as any).env.VITE_API_URL || 'http://localhost:3000/api/v1';
+const rawApiUrl = (import.meta as any).env.VITE_API_URL || 'http://localhost:3000/api/v1';
+const sanitizeBaseUrl = (url: string) => {
+  const cleanUrl = url.endsWith('/') ? url.slice(0, -1) : url;
+  if (cleanUrl.endsWith('/api/v1')) return cleanUrl;
+  return `${cleanUrl}/api/v1`;
+};
+
+const API_BASE = sanitizeBaseUrl(rawApiUrl);
 
 const fetcher = axios.create({
   baseURL: API_BASE,

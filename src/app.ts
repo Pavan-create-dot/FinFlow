@@ -10,14 +10,16 @@ import { errorHandler } from './middlewares/errorHandler';
 import { notFoundHandler } from './middlewares/notFound';
 import { logger } from './utils/logger';
 import { prisma } from './lib/prisma';
-import { pdfQueue } from './controllers/statementController';
 
 const app = express();
 app.use(helmet());
 
-// Restrict CORS to the frontend origin only
+// Restrict CORS to the frontend origin only (stripping trailing slash if present)
+const rawFrontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+const frontendUrl = rawFrontendUrl.endsWith('/') ? rawFrontendUrl.slice(0, -1) : rawFrontendUrl;
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: frontendUrl,
   credentials: true,
 }));
 
@@ -56,8 +58,6 @@ if (process.env.NODE_ENV !== 'test') {
       logger.info('HTTP server closed.');
       
       try {
-        await pdfQueue.close();
-        logger.info('BullMQ Queue closed.');
         await prisma.$disconnect();
         logger.info('Prisma disconnected.');
         process.exit(0);
