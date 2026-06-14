@@ -5,23 +5,29 @@ import { encrypt, decrypt } from '../utils/encryption';
 import { prisma } from '../lib/prisma';
 import { logger } from '../utils/logger';
 
-const redisConnection = process.env.REDIS_URL
-  ? { url: process.env.REDIS_URL, enableOfflineQueue: false, maxRetriesPerRequest: null }
-  : {
-      host: process.env.REDIS_HOST || 'localhost',
-      port: parseInt(process.env.REDIS_PORT || '6379'),
-      enableOfflineQueue: false,
-      maxRetriesPerRequest: null,
-    };
+let _pdfQueue: Queue | null = null;
 
-export const pdfQueue = new Queue('pdf-processing', {
-  connection: redisConnection as any,
-});
+function getPdfQueue(): Queue {
+  if (!_pdfQueue) {
+    const redisConnection = process.env.REDIS_URL
+      ? { url: process.env.REDIS_URL, enableOfflineQueue: false, maxRetriesPerRequest: null }
+      : {
+          host: process.env.REDIS_HOST || 'localhost',
+          port: parseInt(process.env.REDIS_PORT || '6379'),
+          enableOfflineQueue: false,
+          maxRetriesPerRequest: null,
+        };
 
-// Gracefully handle Redis connection errors - don't crash the whole API
-pdfQueue.on('error', (err) => {
-  logger.error(err, 'BullMQ Queue Redis connection error - PDF upload may be unavailable');
-});
+    _pdfQueue = new Queue('pdf-processing', {
+      connection: redisConnection as any,
+    });
+
+    _pdfQueue.on('error', (err) => {
+      logger.error(err, 'BullMQ Queue Redis connection error');
+    });
+  }
+  return _pdfQueue;
+}
 
 export const uploadStatement = async (req: any, res: Response) => {
   try {
@@ -46,18 +52,31 @@ export const uploadStatement = async (req: any, res: Response) => {
       },
     });
 
-    // 2. Add to BullMQ for processing (use raw local path so the worker can read the file)
-    await pdfQueue.add('process-pdf', {
-      statementId: statement.id,
-      userId: userId,
-      filePath: req.file.path,
-    }, {
-      attempts: 3,
-      backoff: {
-        type: 'exponential',
-        delay: 5000,
-      },
-    });
+    // 2. Add to BullMQ for processing
+    try {
+      const queue = getPdfQueue();
+      await queue.add('process-pdf', {
+        statementId: statement.id,
+        userId: userId,
+        filePath: req.file.path,
+      }, {
+        attempts: 3,
+        backoff: {
+          type: 'exponential',
+          delay: 5000,
+        },
+      });
+    } catch (redisErr) {
+      logger.error(redisErr, 'Redis unavailable - cannot queue PDF processing');
+      await prisma.statement.update({
+        where: { id: statement.id },
+        data: { status: 'FAILED', errorMessage: 'Processing service temporarily unavailable' },
+      });
+      return res.status(503).json({
+        error: 'PDF processing service is temporarily unavailable. Please try again later.',
+        statementId: statement.id,
+      });
+    }
 
     return res.status(202).json({
       message: 'Statement uploaded and queued for processing',
