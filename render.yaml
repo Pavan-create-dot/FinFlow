@@ -56,12 +56,13 @@ services:
       - key: ENCRYPTION_SECRET
         sync: false
 
-databases:
-  - name: finflow-db
-    plan: free
-
   # 3. Managed Redis Instance
   - type: redis
     name: finflow-redis
+    plan: free
+    ipAllowList: []
+
+databases:
+  - name: finflow-db
     plan: free
     ipAllowList: []
