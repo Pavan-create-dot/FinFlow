@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "src/app.ts",
   "scripts": {
-    "start": "node dist/app.js",
+    "start": "node dist/start.js",
     "dev": "ts-node-dev --respawn src/app.ts",
     "worker": "npx ts-node src/workers/pdfWorker.ts",
     "worker:prod": "node dist/workers/pdfWorker.js",

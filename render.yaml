@@ -26,30 +26,6 @@ services:
       - key: FRONTEND_URL
         sync: false
 
-  # 2. BullMQ Background Worker Service
-  - type: worker
-    name: finflow-worker
-    runtime: docker
-    dockerfilePath: Dockerfile
-    dockerCommand: npm run worker:prod
-    plan: free
-    envVars:
-      - key: REDIS_URL
-        fromService:
-          type: redis
-          name: finflow-redis
-          property: connectionString
-      - key: DATABASE_URL
-        sync: false
-      - key: GEMINI_API_KEY
-        sync: false
-      - key: ENCRYPTION_SECRET
-        sync: false
-      - key: JWT_ACCESS_SECRET
-        sync: false
-      - key: JWT_REFRESH_SECRET
-        sync: false
-
   # 3. Managed Redis Instance
   - type: redis
     name: finflow-redis
