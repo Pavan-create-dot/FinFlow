@@ -84,10 +84,11 @@ export const pdfWorker = new Worker(
   },
   {
     connection: (process.env.REDIS_URL
-      ? process.env.REDIS_URL
+      ? { url: process.env.REDIS_URL, maxRetriesPerRequest: null }
       : {
           host: process.env.REDIS_HOST || 'localhost',
           port: parseInt(process.env.REDIS_PORT || '6379'),
+          maxRetriesPerRequest: null,
         }) as any,
   }
 );

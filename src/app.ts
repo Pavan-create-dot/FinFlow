@@ -10,7 +10,6 @@ import { errorHandler } from './middlewares/errorHandler';
 import { notFoundHandler } from './middlewares/notFound';
 import { logger } from './utils/logger';
 import { prisma } from './lib/prisma';
-import { pdfQueue } from './controllers/statementController';
 
 const app = express();
 app.use(helmet());
@@ -56,8 +55,6 @@ if (process.env.NODE_ENV !== 'test') {
       logger.info('HTTP server closed.');
       
       try {
-        await pdfQueue.close();
-        logger.info('BullMQ Queue closed.');
         await prisma.$disconnect();
         logger.info('Prisma disconnected.');
         process.exit(0);

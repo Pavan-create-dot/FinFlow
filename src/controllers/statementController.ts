@@ -5,13 +5,22 @@ import { encrypt, decrypt } from '../utils/encryption';
 import { prisma } from '../lib/prisma';
 import { logger } from '../utils/logger';
 
+const redisConnection = process.env.REDIS_URL
+  ? { url: process.env.REDIS_URL, enableOfflineQueue: false, maxRetriesPerRequest: null }
+  : {
+      host: process.env.REDIS_HOST || 'localhost',
+      port: parseInt(process.env.REDIS_PORT || '6379'),
+      enableOfflineQueue: false,
+      maxRetriesPerRequest: null,
+    };
+
 export const pdfQueue = new Queue('pdf-processing', {
-  connection: (process.env.REDIS_URL
-    ? process.env.REDIS_URL
-    : {
-        host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT || '6379'),
-      }) as any,
+  connection: redisConnection as any,
+});
+
+// Gracefully handle Redis connection errors - don't crash the whole API
+pdfQueue.on('error', (err) => {
+  logger.error(err, 'BullMQ Queue Redis connection error - PDF upload may be unavailable');
 });
 
 export const uploadStatement = async (req: any, res: Response) => {
