@@ -14,9 +14,12 @@ import { prisma } from './lib/prisma';
 const app = express();
 app.use(helmet());
 
-// Restrict CORS to the frontend origin only
+// Restrict CORS to the frontend origin only (stripping trailing slash if present)
+const rawFrontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+const frontendUrl = rawFrontendUrl.endsWith('/') ? rawFrontendUrl.slice(0, -1) : rawFrontendUrl;
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: frontendUrl,
   credentials: true,
 }));
 
