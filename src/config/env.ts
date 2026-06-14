@@ -10,7 +10,7 @@ const envSchema = z.object({
   GEMINI_API_KEY: z.string().min(1),
   JWT_ACCESS_SECRET: z.string().min(1),
   JWT_REFRESH_SECRET: z.string().min(1),
-  ENCRYPTION_SECRET: z.string().length(32),
+  ENCRYPTION_SECRET: z.string().min(32),
   PORT: z.string().regex(/^\d+$/).optional().default('3000'),
   FRONTEND_URL: z.string().url().optional()
 });
