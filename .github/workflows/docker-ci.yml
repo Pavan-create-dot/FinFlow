@@ -1,0 +1,36 @@
+name: Docker Build CI
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'src/**'
+      - 'prisma/**'
+      - 'package.json'
+      - 'tsconfig.json'
+      - 'Dockerfile'
+      - '.github/workflows/docker-ci.yml'
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build:
+    name: Build & Validate Container
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: finflow-backend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
