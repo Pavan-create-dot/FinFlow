@@ -1,5 +1,7 @@
 # Build Stage
-FROM node:20-alpine AS builder
+FROM node:20-slim AS builder
+# Install OpenSSL for Prisma
+RUN apt-get update -y && apt-get install -y openssl
 WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
@@ -12,7 +14,9 @@ RUN npm run build
 RUN npm prune --production
 
 # Runner Stage
-FROM node:20-alpine AS runner
+FROM node:20-slim AS runner
+# Install OpenSSL for Prisma in runner container as well
+RUN apt-get update -y && apt-get install -y openssl
 WORKDIR /app
 ENV NODE_ENV=production
 
@@ -25,6 +29,5 @@ COPY --from=builder /app/prisma ./prisma
 # Expose default API port
 EXPOSE 3000
 
-# Default command (Web API Service)
-# For the background worker service, Render will override this to: npm run worker:prod
-CMD ["node", "dist/app.js"]
+# Default command (starts both API and Worker concurrently via start.js)
+CMD ["node", "dist/start.js"]
