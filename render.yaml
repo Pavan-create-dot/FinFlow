@@ -50,8 +50,8 @@ services:
       - key: JWT_REFRESH_SECRET
         sync: false
 
-# 3. Managed Redis Instance
-redis:
-  name: finflow-redis
-  plan: free
-  ipAllowList: []
+  # 3. Managed Redis Instance
+  - type: redis
+    name: finflow-redis
+    plan: free
+    ipAllowList: []
