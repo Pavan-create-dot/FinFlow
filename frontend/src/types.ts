@@ -11,6 +11,7 @@ export interface Transaction {
     color: string;
   } | null;
   merchantName?: string;
+  isSubscription?: boolean;
 }
 
 export interface Category {
@@ -27,4 +28,12 @@ export interface Statement {
   status: string;
   errorMessage?: string | null;
   createdAt: string;
+}
+
+export interface Budget {
+  id: string;
+  categoryId: string;
+  category: Category;
+  amount: number;
+  spent: number;
 }

@@ -109,3 +109,29 @@ export const getStatements = async (req: any, res: Response) => {
     return res.status(500).json({ error: 'Failed to fetch statements' });
   }
 };
+
+export const deleteStatement = async (req: any, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const statement = await prisma.statement.findUnique({ where: { id } });
+    if (!statement || statement.userId !== userId) {
+      return res.status(404).json({ error: 'Statement not found' });
+    }
+
+    // Delete associated transactions first
+    await prisma.transaction.deleteMany({
+      where: { statementId: id }
+    });
+
+    await prisma.statement.delete({
+      where: { id }
+    });
+
+    return res.json({ message: 'Statement deleted successfully' });
+  } catch (error) {
+    logger.error(error, 'Delete Statement Error');
+    return res.status(500).json({ error: 'Failed to delete statement' });
+  }
+};
