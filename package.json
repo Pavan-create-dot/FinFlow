@@ -9,7 +9,7 @@
     "worker:prod": "node dist/workers/pdfWorker.js",
     "generate": "prisma generate",
     "db:push": "prisma db push",
-    "build": "tsc",
+    "build": "tsc && prisma db seed",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint \"src/**/*.ts\" --fix",
     "format": "prettier --write \"src/**/*.ts\"",
