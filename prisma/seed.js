@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
 
@@ -12,7 +12,6 @@ const categories = [
   { name: 'Health', color: '#ec4899', icon: 'heart' },
   { name: 'Investments', color: '#22c55e', icon: 'trending-up' },
   { name: 'Salary', color: '#10b981', icon: 'dollar-sign' },
-  // Fixed: "Other" was missing but the AI prompt uses it as a valid category
   { name: 'Other', color: '#94a3b8', icon: 'tag' },
 ];
 
