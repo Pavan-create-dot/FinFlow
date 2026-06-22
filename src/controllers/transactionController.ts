@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { serializePrisma } from '../utils/serializer';
-import { decrypt } from '../utils/encryption';
+import { decrypt, encrypt } from '../utils/encryption';
 import { prisma } from '../lib/prisma';
 import { logger } from '../utils/logger';
 
@@ -13,10 +13,11 @@ const decryptTransaction = (transaction: any) => ({
 
 export const getTransactions = async (req: any, res: Response) => {
   const userId = req.user.id;
-  const { categoryId, type, startDate, endDate, limit = 50, offset = 0 } = req.query;
+  const { categoryId, type, startDate, endDate, limit = 50, offset = 0, isSubscription } = req.query;
 
   const categoryFilter = categoryId && categoryId !== 'ALL' && categoryId !== 'undefined' ? categoryId as string : undefined;
   const typeFilter = type && type !== 'ALL' && type !== 'undefined' ? type as string : undefined;
+  const subscriptionFilter = isSubscription === 'true' ? true : isSubscription === 'false' ? false : undefined;
 
   try {
     const transactions = await prisma.transaction.findMany({
@@ -24,6 +25,7 @@ export const getTransactions = async (req: any, res: Response) => {
         userId,
         categoryId: categoryFilter,
         type: typeFilter,
+        isSubscription: subscriptionFilter,
         date: {
           gte: startDate ? new Date(startDate as string) : undefined,
           lte: endDate ? new Date(endDate as string) : undefined,
@@ -146,5 +148,156 @@ export const getCategories = async (req: any, res: Response) => {
   } catch (error) {
     logger.error(error, 'Fetch Categories Error');
     return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+export const createTransaction = async (req: any, res: Response) => {
+  const userId = req.user.id;
+  const { date, amount, description, type, categoryId, merchantName, isSubscription } = req.body;
+
+  if (!date || !amount || !description || !type) {
+    return res.status(400).json({ error: 'Date, amount, description, and type are required' });
+  }
+
+  try {
+    const tx = await prisma.transaction.create({
+      data: {
+        userId,
+        date: new Date(date),
+        amount: BigInt(amount),
+        description: encrypt(description) as string,
+        merchantName: merchantName ? (encrypt(merchantName) as string) : null,
+        type,
+        originalText: encrypt(description) as string,
+        isSubscription: isSubscription || false,
+        categoryId: categoryId || null,
+      },
+      include: { category: true },
+    });
+
+    return res.json(serializePrisma(decryptTransaction(tx)));
+  } catch (error) {
+    logger.error(error, 'Create Transaction Error');
+    return res.status(500).json({ error: 'Failed to create transaction' });
+  }
+};
+
+export const getBudgets = async (req: any, res: Response) => {
+  const userId = req.user.id;
+  try {
+    const budgets = await prisma.budget.findMany({
+      where: { userId },
+      include: { category: true },
+    });
+
+    // Calculate current month's expenses for each budgeted category
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const categorySpends = await prisma.transaction.groupBy({
+      by: ['categoryId'],
+      where: {
+        userId,
+        type: 'EXPENSE',
+        date: { gte: startOfMonth },
+      },
+      _sum: { amount: true },
+    });
+
+    const spendsMap = new Map(
+      categorySpends.map((s) => [s.categoryId, Number(s._sum.amount || 0)])
+    );
+
+    const result = budgets.map((b) => ({
+      id: b.id,
+      categoryId: b.categoryId,
+      category: b.category,
+      amount: Number(b.amount),
+      spent: spendsMap.get(b.categoryId) || 0,
+    }));
+
+    return res.json(serializePrisma(result));
+  } catch (error) {
+    logger.error(error, 'Fetch Budgets Error');
+    return res.status(500).json({ error: 'Failed to fetch budgets' });
+  }
+};
+
+export const upsertBudget = async (req: any, res: Response) => {
+  const userId = req.user.id;
+  const { categoryId, amount } = req.body;
+
+  if (!categoryId || amount === undefined) {
+    return res.status(400).json({ error: 'Category ID and amount are required' });
+  }
+
+  try {
+    const budget = await prisma.budget.upsert({
+      where: {
+        userId_categoryId: { userId, categoryId },
+      },
+      update: {
+        amount: BigInt(amount),
+      },
+      create: {
+        userId,
+        categoryId,
+        amount: BigInt(amount),
+      },
+      include: { category: true },
+    });
+
+    // Also get the current month spent value to return full details
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const sumAgg = await prisma.transaction.aggregate({
+      where: {
+        userId,
+        categoryId,
+        type: 'EXPENSE',
+        date: { gte: startOfMonth },
+      },
+      _sum: { amount: true },
+    });
+
+    const result = {
+      id: budget.id,
+      categoryId: budget.categoryId,
+      category: budget.category,
+      amount: Number(budget.amount),
+      spent: Number(sumAgg._sum.amount || 0),
+    };
+
+    return res.json(serializePrisma(result));
+  } catch (error) {
+    logger.error(error, 'Upsert Budget Error');
+    return res.status(500).json({ error: 'Failed to save budget' });
+  }
+};
+
+export const deleteBudget = async (req: any, res: Response) => {
+  const userId = req.user.id;
+  const { id } = req.params;
+
+  try {
+    const budget = await prisma.budget.findFirst({
+      where: { id, userId },
+    });
+
+    if (!budget) {
+      return res.status(404).json({ error: 'Budget not found' });
+    }
+
+    await prisma.budget.delete({
+      where: { id },
+    });
+
+    return res.json({ message: 'Budget deleted successfully' });
+  } catch (error) {
+    logger.error(error, 'Delete Budget Error');
+    return res.status(500).json({ error: 'Failed to delete budget' });
   }
 };

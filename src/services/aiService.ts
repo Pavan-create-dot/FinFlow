@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI, GenerationConfig } from '@google/generative-ai';
-import { TRANSACTION_EXTRACTION_PROMPT, FINANCIAL_INSIGHTS_PROMPT } from './prompts';
+import { TRANSACTION_EXTRACTION_PROMPT, FINANCIAL_INSIGHTS_PROMPT, FINANCIAL_CHAT_SYSTEM_PROMPT } from './prompts';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'dummy-key');
 
@@ -13,12 +13,12 @@ const JSON_CONFIG: GenerationConfig = {
 
 export class AIService {
   private static model = genAI.getGenerativeModel({ 
-    model: 'gemini-1.5-flash',
+    model: 'gemini-3.5-flash',
     generationConfig: JSON_CONFIG 
   });
 
   private static proModel = genAI.getGenerativeModel({
-    model: 'gemini-1.5-pro', // Use Pro for complex insights
+    model: 'gemini-2.5-pro', // Use Pro for complex insights
     generationConfig: JSON_CONFIG
   });
 
@@ -167,5 +167,62 @@ export class AIService {
         topCategory: 'Shopping'
       };
     }
+  }
+
+  /**
+   * Chat interface for FinAI personalized advisor
+   */
+  static async chat(message: string, history: any[], financialContext: any) {
+    const systemInstruction = `${FINANCIAL_CHAT_SYSTEM_PROMPT}\n\nUSER FINANCIAL DATA CONTEXT:\n${JSON.stringify(financialContext, null, 2)}`;
+
+    // Try primary model first, then fallback
+    const modelsToTry = ['gemini-3.5-flash', 'gemini-2.5-flash'];
+
+    const formattedHistory = history.map((h: any) => ({
+      role: h.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: h.content }]
+    }));
+
+    for (const modelName of modelsToTry) {
+      const chatModel = genAI.getGenerativeModel({
+        model: modelName,
+        systemInstruction: systemInstruction
+      });
+
+      // Retry up to 3 times with exponential backoff for transient errors
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          const chatSession = chatModel.startChat({
+            history: formattedHistory,
+            generationConfig: {
+              temperature: 0.7,
+              topP: 0.95,
+              maxOutputTokens: 2048,
+            }
+          });
+
+          const result = await chatSession.sendMessage(message);
+          return result.response.text();
+        } catch (error: any) {
+          const status = error?.status || error?.response?.status;
+          const isRetryable = status === 503 || status === 429;
+
+          console.error(`AI Chat Error (model=${modelName}, attempt=${attempt + 1}):`, error?.message || error);
+
+          if (isRetryable && attempt < 2) {
+            // Wait before retrying: 1s, 3s
+            const delay = (attempt + 1) * 1500;
+            await new Promise(resolve => setTimeout(resolve, delay));
+            continue;
+          }
+
+          // If not retryable or last attempt, try next model
+          break;
+        }
+      }
+    }
+
+    // All models and retries exhausted
+    return "I'm sorry, the AI service is currently experiencing high demand. Please wait a moment and try again!";
   }
 }

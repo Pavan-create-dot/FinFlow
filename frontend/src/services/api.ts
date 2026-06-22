@@ -32,16 +32,24 @@ export const api = {
       headers: { 'Content-Type': 'multipart/form-data' }
     }),
     list: () => fetcher.get('/statements'),
+    delete: (id: string) => fetcher.delete(`/statements/${id}`),
   },
   transactions: {
     list: (params?: any) => fetcher.get('/transactions', { params }),
+    create: (data: any) => fetcher.post('/transactions', data),
     update: (id: string, data: { categoryId: string | null }) => fetcher.patch(`/transactions/${id}`, data),
     summary: () => fetcher.get('/analytics/summary'),
   },
   categories: {
     list: () => fetcher.get('/categories'),
   },
+  budgets: {
+    list: () => fetcher.get('/budgets'),
+    save: (data: { categoryId: string; amount: number }) => fetcher.post('/budgets', data),
+    delete: (id: string) => fetcher.delete(`/budgets/${id}`),
+  },
   ai: {
     insights: () => fetcher.get('/ai/insights'),
+    chat: (message: string, history: any[]) => fetcher.post('/ai/chat', { message, history }),
   }
 };

@@ -20,6 +20,7 @@ model User {
   statements    Statement[]
   transactions  Transaction[]
   categories    UserCategory[]
+  budgets       Budget[]
 }
 
 model Statement {
@@ -70,6 +71,7 @@ model Category {
   
   transactions Transaction[]
   userCategories UserCategory[]
+  budgets      Budget[]
 }
 
 model UserCategory {
@@ -79,4 +81,17 @@ model UserCategory {
   category    Category @relation(fields: [categoryId], references: [id])
 
   @@id([userId, categoryId])
+}
+
+model Budget {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id])
+  amount      BigInt   // Stored in paise/cents
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, categoryId])
 }
