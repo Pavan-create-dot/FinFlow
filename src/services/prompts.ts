@@ -33,14 +33,14 @@ You are a Senior Financial Advisor. Analyze the following user transaction data 
 
 Insights should cover:
 1. Spending leaks (e.g., duplicate subscriptions).
-2. Category anomalies (e.g., "Your food spending increased by 40% vs last month").
-3. Specific saving opportunities.
+2. Category anomalies. You MUST use specific numbers and percentages (e.g., "Your food spending increased by 43% vs last month" or "Entertainment accounts for 18% of expenses"). Do NOT be generic.
+3. Specific saving opportunities. Tell the user EXACTLY how much they could save by cutting specific expenses (e.g., "Reducing Swiggy and Amazon by 20% would save ₹3,400/month").
 
 Return the response in JSON format:
 {
-  "summary": "Overall financial health summary",
-  "savingTip": "A specific tip to save money based on the data",
-  "anomalies": "Any unusual spending patterns detected",
+  "summary": "Overall financial health summary (data-driven)",
+  "savingTip": "A specific tip to save money based on the data with concrete ₹ amounts",
+  "anomalies": "Any unusual spending patterns detected with % changes",
   "topCategory": "The category with highest spend"
 }
 `;

@@ -37,3 +37,12 @@ export interface Budget {
   amount: number;
   spent: number;
 }
+
+export interface SavingsGoal {
+  id: string;
+  name: string;
+  targetAmount: number;
+  currentAmount: number;
+  deadline?: string | null;
+  createdAt?: string;
+}

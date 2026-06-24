@@ -22,6 +22,19 @@ fetcher.interceptors.request.use((config) => {
   return config;
 });
 
+// Add interceptor for auth errors
+fetcher.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+      localStorage.removeItem('token');
+      window.dispatchEvent(new Event('auth-logout'));
+    }
+    return Promise.reject(error);
+  }
+);
+
+
 export const api = {
   auth: {
     login: (data: any) => fetcher.post('/auth/login', data),
@@ -51,5 +64,11 @@ export const api = {
   ai: {
     insights: () => fetcher.get('/ai/insights'),
     chat: (message: string, history: any[]) => fetcher.post('/ai/chat', { message, history }),
+  },
+  goals: {
+    list: () => fetcher.get('/goals'),
+    create: (data: { name: string; targetAmount: number; deadline?: string }) => fetcher.post('/goals', data),
+    updateProgress: (id: string, currentAmount: number) => fetcher.patch(`/goals/${id}/progress`, { currentAmount }),
+    delete: (id: string) => fetcher.delete(`/goals/${id}`),
   }
 };
