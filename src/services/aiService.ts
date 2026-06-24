@@ -13,12 +13,12 @@ const JSON_CONFIG: GenerationConfig = {
 
 export class AIService {
   private static model = genAI.getGenerativeModel({ 
-    model: 'gemini-3.5-flash',
+    model: 'gemini-2.0-flash',
     generationConfig: JSON_CONFIG 
   });
 
   private static proModel = genAI.getGenerativeModel({
-    model: 'gemini-2.5-pro', // Use Pro for complex insights
+    model: 'gemini-2.5-flash', // Use 2.5-flash for complex insights
     generationConfig: JSON_CONFIG
   });
 
@@ -28,6 +28,15 @@ export class AIService {
       return (data as { transactions: any[] }).transactions;
     }
     return [];
+  }
+
+  private static cleanJsonString(str: string): string {
+    let clean = str.trim();
+    if (clean.startsWith('```')) {
+      clean = clean.replace(/^```(json)?/, '');
+      clean = clean.replace(/```$/, '');
+    }
+    return clean.trim();
   }
 
   /**
@@ -138,7 +147,8 @@ export class AIService {
     try {
       const result = await this.model.generateContent(prompt);
       const response = result.response;
-      const parsed = this.normalizeExtractionResult(JSON.parse(response.text()));
+      const cleaned = this.cleanJsonString(response.text());
+      const parsed = this.normalizeExtractionResult(JSON.parse(cleaned));
       return parsed.length > 0 ? parsed : this.extractTransactionsFallback(text);
     } catch (error) {
       console.error('AI Extraction Error (falling back to parser):', error);
@@ -156,7 +166,8 @@ export class AIService {
 
     try {
       const result = await this.proModel.generateContent(prompt);
-      return JSON.parse(result.response.text());
+      const cleaned = this.cleanJsonString(result.response.text());
+      return JSON.parse(cleaned);
     } catch (error) {
       console.error('AI Insights Error (using fallback):', error);
       // Fallback insights
@@ -176,7 +187,7 @@ export class AIService {
     const systemInstruction = `${FINANCIAL_CHAT_SYSTEM_PROMPT}\n\nUSER FINANCIAL DATA CONTEXT:\n${JSON.stringify(financialContext, null, 2)}`;
 
     // Try primary model first, then fallback
-    const modelsToTry = ['gemini-3.5-flash', 'gemini-2.5-flash'];
+    const modelsToTry = ['gemini-2.0-flash', 'gemini-2.5-flash'];
 
     const formattedHistory = history.map((h: any) => ({
       role: h.role === 'assistant' ? 'model' : 'user',

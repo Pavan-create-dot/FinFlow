@@ -6,6 +6,7 @@ import authRoutes from './routes/authRoutes';
 import statementRoutes from './routes/statementRoutes';
 import transactionRoutes from './routes/transactionRoutes';
 import aiRoutes from './routes/aiRoutes';
+import goalsRoutes from './routes/goalsRoutes';
 import { errorHandler } from './middlewares/errorHandler';
 import { notFoundHandler } from './middlewares/notFound';
 import { logger } from './utils/logger';
@@ -51,6 +52,7 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/statements', statementRoutes);
 app.use('/api/v1', transactionRoutes);
 app.use('/api/v1/ai', aiRoutes);
+app.use('/api/v1/goals', goalsRoutes);
 
 // 404 & Error Handling
 app.use(notFoundHandler);

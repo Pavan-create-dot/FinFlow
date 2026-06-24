@@ -72,13 +72,20 @@ export const pdfWorker = new Worker(
 
     } catch (error: any) {
       logger.error(error, `Worker failed at job ${job.id}`);
-      await prisma.statement.update({
-        where: { id: statementId },
-        data: { 
-          status: 'FAILED',
-          errorMessage: encrypt(error.message) as string 
-        },
-      });
+      try {
+        await prisma.statement.update({
+          where: { id: statementId },
+          data: { 
+            status: 'FAILED',
+            errorMessage: encrypt(error.message) as string 
+          },
+        });
+      } catch (dbErr) {
+        logger.error(dbErr, `Could not set statement status to FAILED`);
+      }
+      if (error.code === 'P2025') {
+        return;
+      }
       throw error;
     }
   },

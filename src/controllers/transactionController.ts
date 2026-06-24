@@ -13,14 +13,19 @@ const decryptTransaction = (transaction: any) => ({
 
 export const getTransactions = async (req: any, res: Response) => {
   const userId = req.user.id;
-  const { categoryId, type, startDate, endDate, limit = 50, offset = 0, isSubscription } = req.query;
+  const { categoryId, type, startDate, endDate, limit = 50, offset = 0, isSubscription, search, minAmount, maxAmount, sortOrder } = req.query;
 
   const categoryFilter = categoryId && categoryId !== 'ALL' && categoryId !== 'undefined' ? categoryId as string : undefined;
   const typeFilter = type && type !== 'ALL' && type !== 'undefined' ? type as string : undefined;
   const subscriptionFilter = isSubscription === 'true' ? true : isSubscription === 'false' ? false : undefined;
 
+  let orderBy: any = { date: 'desc' };
+  if (sortOrder === 'date-asc') orderBy = { date: 'asc' };
+  if (sortOrder === 'amount-desc') orderBy = { amount: 'desc' };
+  if (sortOrder === 'amount-asc') orderBy = { amount: 'asc' };
+
   try {
-    const transactions = await prisma.transaction.findMany({
+    let transactions = await prisma.transaction.findMany({
       where: {
         userId,
         categoryId: categoryFilter,
@@ -29,15 +34,31 @@ export const getTransactions = async (req: any, res: Response) => {
         date: {
           gte: startDate ? new Date(startDate as string) : undefined,
           lte: endDate ? new Date(endDate as string) : undefined,
+        },
+        amount: {
+          gte: minAmount ? BigInt(Number(minAmount) * 100) : undefined,
+          lte: maxAmount ? BigInt(Number(maxAmount) * 100) : undefined,
         }
       },
-      take: Number(limit),
-      skip: Number(offset),
-      orderBy: { date: 'desc' },
+      take: search ? undefined : Number(limit), // If searching, we fetch all and filter in memory since descriptions are encrypted
+      skip: search ? undefined : Number(offset),
+      orderBy,
       include: { category: true }
     });
 
-    return res.json(serializePrisma(transactions.map(decryptTransaction)));
+    let decrypted = transactions.map(decryptTransaction);
+
+    if (search) {
+      const query = (search as string).toLowerCase();
+      decrypted = decrypted.filter(t => 
+        t.description.toLowerCase().includes(query) || 
+        (t.merchantName && t.merchantName.toLowerCase().includes(query))
+      );
+      // Apply limit and offset after memory filter
+      decrypted = decrypted.slice(Number(offset), Number(offset) + Number(limit));
+    }
+
+    return res.json(serializePrisma(decrypted));
   } catch (error) {
     logger.error(error, 'Fetch Transactions Error');
     return res.status(500).json({ error: 'Failed to fetch transactions' });
@@ -68,12 +89,10 @@ export const getAggregates = async (req: any, res: Response) => {
 
     totals.savings = totals.totalIncome - totals.totalSpend;
 
-    // Fixed: correctly flag Over Budget even when income is zero
     if (totals.totalSpend > totals.totalIncome) {
       totals.budgetStatus = totals.totalIncome === 0 ? 'No Income Recorded' : 'Over Budget';
     }
 
-    // Get category distribution
     const categoryAggs = await prisma.transaction.groupBy({
       by: ['categoryId'],
       where: { userId, type: 'EXPENSE' },
@@ -93,7 +112,84 @@ export const getAggregates = async (req: any, res: Response) => {
       };
     });
 
-    return res.json(serializePrisma({ ...totals, categories }));
+    // Tier 1: FinScore Calculation
+    const budgets = await prisma.budget.findMany({ where: { userId } });
+    let finScore = 75; // Base score
+    
+    // Savings Rate (Max +15)
+    let savingsRate = 0;
+    if (totals.totalIncome > 0) {
+      savingsRate = (totals.savings / totals.totalIncome) * 100;
+      if (savingsRate > 20) finScore += 15;
+      else if (savingsRate > 10) finScore += 10;
+      else if (savingsRate > 0) finScore += 5;
+      else finScore -= 10;
+    }
+
+    // Budget Discipline (Max +10)
+    if (budgets.length > 0) {
+      finScore += 5; // Bonus for having budgets
+      const exceeded = budgets.filter(b => false).length; // Need actual spent to calculate, simplifying for now
+      if (totals.budgetStatus === 'Healthy') finScore += 5;
+      else finScore -= 5;
+    }
+
+    finScore = Math.min(Math.max(finScore, 0), 100);
+
+    // Tier 1: Basic Anomaly Detection (Mocked/Simplified logic based on recent high txs)
+    const recentHighTxs = await prisma.transaction.findMany({
+      where: { userId, type: 'EXPENSE', amount: { gte: 500000 } }, // > 5000 INR
+      orderBy: { date: 'desc' },
+      take: 3,
+      include: { category: true }
+    });
+    
+    const anomalies = recentHighTxs.map(t => {
+      const dec = decryptTransaction(t);
+      return `Unusual high transaction: \u20B9${Number(t.amount)/100} at ${dec.merchantName || 'Unknown Merchant'} (${t.category?.name || 'Uncategorized'})`;
+    });
+
+    // Month-over-month trend data (last 6 months)
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+    sixMonthsAgo.setDate(1);
+    sixMonthsAgo.setHours(0, 0, 0, 0);
+
+    const monthlyTransactions = await prisma.transaction.findMany({
+      where: {
+        userId,
+        type: 'EXPENSE',
+        date: { gte: sixMonthsAgo }
+      },
+      select: {
+        amount: true,
+        date: true
+      }
+    });
+
+    // Group by month
+    const monthlyTrendMap: { [key: string]: number } = {};
+    // Initialize the last 6 months with 0
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      const label = d.toLocaleDateString('en-US', { month: 'short' }); // e.g. "Jan", "Feb"
+      monthlyTrendMap[label] = 0;
+    }
+
+    monthlyTransactions.forEach(t => {
+      const label = new Date(t.date).toLocaleDateString('en-US', { month: 'short' });
+      if (monthlyTrendMap[label] !== undefined) {
+        monthlyTrendMap[label] += Number(t.amount);
+      }
+    });
+
+    const monthlyTrend = Object.keys(monthlyTrendMap).map(month => ({
+      month,
+      amount: monthlyTrendMap[month]
+    }));
+
+    return res.json(serializePrisma({ ...totals, categories, finScore: Math.round(finScore), anomalies, monthlyTrend }));
   } catch (error) {
     logger.error(error, 'Fetch Analytics Summary Error');
     return res.status(500).json({ error: 'Failed to fetch analytics summary' });

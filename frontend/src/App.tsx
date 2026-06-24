@@ -15,14 +15,18 @@ import {
   TrendingDown,
   TrendingUp,
   CreditCard,
-  Trash2
+  Trash2,
+  Target,
+  Menu,
+  X
 } from 'lucide-react';
-import { SpendingTrend, CategoryBreakdown } from './components/DashboardCharts';
+import { SpendingTrend, CategoryBreakdown, MonthlyTrendChart, CategoryPieChart } from './components/DashboardCharts';
 import { Auth } from './components/Auth';
 import { UploadModal } from './components/UploadModal';
 import { AddTransactionModal } from './components/AddTransactionModal';
 import { TransactionTable } from './components/TransactionTable';
 import { AIInsights } from './components/AIInsights';
+import { SavingsGoals } from './components/SavingsGoals';
 import { api } from './services/api';
 import { Transaction, Category, Statement, Budget } from './types';
 import './index.css';
@@ -31,7 +35,13 @@ const App = () => {
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [showUpload, setShowUpload] = useState(false);
   const [showAddTx, setShowAddTx] = useState(false);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'transactions' | 'budgets' | 'subscriptions' | 'ai' | 'statements'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'transactions' | 'budgets' | 'subscriptions' | 'ai' | 'statements' | 'goals'>('dashboard');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Auto-close mobile sidebar drawer when navigating
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [activeTab]);
 
   // Core Data
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -40,7 +50,17 @@ const App = () => {
   const [statements, setStatements] = useState<Statement[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [subscriptions, setSubscriptions] = useState<Transaction[]>([]);
-  const [summary, setSummary] = useState({ totalSpend: 0, totalIncome: 0, savings: 0, budgetStatus: 'Healthy', categories: [] as any[] });
+  const [goals, setGoals] = useState<any[]>([]);
+  const [summary, setSummary] = useState({ 
+    totalSpend: 0, 
+    totalIncome: 0, 
+    savings: 0, 
+    budgetStatus: 'Healthy', 
+    categories: [] as any[],
+    finScore: 75,
+    anomalies: [] as string[],
+    monthlyTrend: [] as any[]
+  });
   
   // States & Filters
   const [loading, setLoading] = useState(false);
@@ -53,6 +73,10 @@ const App = () => {
   const [filterType, setFilterType] = useState('ALL');
   const [filterStartDate, setFilterStartDate] = useState('');
   const [filterEndDate, setFilterEndDate] = useState('');
+  const [filterSearch, setFilterSearch] = useState('');
+  const [filterMinAmount, setFilterMinAmount] = useState('');
+  const [filterMaxAmount, setFilterMaxAmount] = useState('');
+  const [filterSortOrder, setFilterSortOrder] = useState('date-desc');
 
   // Budget Setup State
   const [budgetCategory, setBudgetCategory] = useState('');
@@ -67,6 +91,17 @@ const App = () => {
   }, [token]);
 
   useEffect(() => {
+    const handleAuthLogout = () => {
+      setToken(null);
+    };
+    window.addEventListener('auth-logout', handleAuthLogout);
+    return () => {
+      window.removeEventListener('auth-logout', handleAuthLogout);
+    };
+  }, []);
+
+
+  useEffect(() => {
     if (token) {
       if (activeTab === 'transactions') {
         fetchFilteredTransactions();
@@ -76,16 +111,30 @@ const App = () => {
         fetchBudgets();
       } else if (activeTab === 'subscriptions') {
         fetchSubscriptions();
+      } else if (activeTab === 'goals') {
+        fetchGoals();
       }
     }
-  }, [activeTab, filterCategory, filterType, filterStartDate, filterEndDate, token]);
+  }, [
+    activeTab, 
+    filterCategory, 
+    filterType, 
+    filterStartDate, 
+    filterEndDate, 
+    filterSearch, 
+    filterMinAmount, 
+    filterMaxAmount, 
+    filterSortOrder, 
+    token
+  ]);
 
   const fetchInitialData = async () => {
     setLoading(true);
     try {
       await Promise.all([
         fetchDashboardData(),
-        fetchCategoriesList()
+        fetchCategoriesList(),
+        fetchGoals()
       ]);
     } catch (err) {
       console.error('Failed to fetch initial data', err);
@@ -149,6 +198,15 @@ const App = () => {
     }
   };
 
+  const fetchGoals = async () => {
+    try {
+      const res = await api.goals.list();
+      setGoals(res.data);
+    } catch (err) {
+      console.error('Failed to fetch goals', err);
+    }
+  };
+
   const fetchFilteredTransactions = async () => {
     setTxLoading(true);
     try {
@@ -157,6 +215,10 @@ const App = () => {
       if (filterType !== 'ALL') params.type = filterType;
       if (filterStartDate) params.startDate = filterStartDate;
       if (filterEndDate) params.endDate = filterEndDate;
+      if (filterSearch) params.search = filterSearch;
+      if (filterMinAmount) params.minAmount = filterMinAmount;
+      if (filterMaxAmount) params.maxAmount = filterMaxAmount;
+      if (filterSortOrder) params.sortOrder = filterSortOrder;
       
       const res = await api.transactions.list(params);
       setAllTransactions(res.data);
@@ -294,8 +356,27 @@ const App = () => {
 
   return (
     <div className="dashboard-layout">
+      {/* Mobile Header */}
+      <header className="mobile-header">
+        <div className="logo">
+          <div className="logo-icon">🗲</div>
+          Fin<span>Flow</span>
+        </div>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <button className="hamburger-btn" onClick={() => setShowUpload(true)} title="Upload Statement">
+            <FolderUp size={20} />
+          </button>
+          <button className="hamburger-btn" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} title="Menu">
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
+      </header>
+
+      {/* Mobile Sidebar Overlay */}
+      {mobileMenuOpen && <div className="sidebar-overlay" onClick={() => setMobileMenuOpen(false)} />}
+
       {/* Sidebar */}
-      <aside className="sidebar">
+      <aside className={`sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
         <div className="logo">
           <div className="logo-icon">🗲</div>
           Fin<span>Flow</span>
@@ -328,6 +409,13 @@ const App = () => {
           >
             <Calendar size={18} />
             Subscriptions
+          </div>
+          <div 
+            className={`nav-item ${activeTab === 'goals' ? 'active' : ''}`}
+            onClick={() => setActiveTab('goals')}
+          >
+            <Target size={18} />
+            Savings Goals
           </div>
           <div 
             className={`nav-item ${activeTab === 'ai' ? 'active' : ''}`}
@@ -388,72 +476,175 @@ const App = () => {
               <>
                 {/* Stats Grid */}
                 <section className="stat-grid">
-                  <div className="glass-card stat-card spend">
-                    <div>
-                      <div className="stat-icon">
-                        <TrendingDown size={22} />
-                      </div>
-                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', fontWeight: 600 }}>Total Spent</p>
-                    </div>
-                    <div>
-                      <h2 style={{ fontSize: '2rem', fontWeight: 800, margin: '0.5rem 0', fontFamily: 'Outfit' }}>
-                        ₹{(summary.totalSpend / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                      </h2>
-                      <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>All statements & manual inputs</p>
-                    </div>
-                  </div>
-
+                  {/* Total Income */}
                   <div className="glass-card stat-card income">
                     <div>
                       <div className="stat-icon">
-                        <TrendingUp size={22} />
+                        <TrendingUp size={20} />
                       </div>
-                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', fontWeight: 600 }}>Total Income</p>
+                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 600 }}>Total Income</p>
                     </div>
                     <div>
-                      <h2 style={{ fontSize: '2rem', fontWeight: 800, margin: '0.5rem 0', fontFamily: 'Outfit' }}>
-                        ₹{(summary.totalIncome / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                      </h2>
-                      <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Earnings and deposits logged</p>
+                      <h3 style={{ fontSize: '1.6rem', fontWeight: 800, margin: '0.25rem 0', fontFamily: 'Outfit' }}>
+                        ₹{(summary.totalIncome / 100).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                      </h3>
                     </div>
                   </div>
 
+                  {/* Total Expenses */}
+                  <div className="glass-card stat-card spend">
+                    <div>
+                      <div className="stat-icon">
+                        <TrendingDown size={20} />
+                      </div>
+                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 600 }}>Total Expenses</p>
+                    </div>
+                    <div>
+                      <h3 style={{ fontSize: '1.6rem', fontWeight: 800, margin: '0.25rem 0', fontFamily: 'Outfit' }}>
+                        ₹{(summary.totalSpend / 100).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                      </h3>
+                    </div>
+                  </div>
+
+                  {/* Savings Rate */}
                   <div className="glass-card stat-card savings">
                     <div>
                       <div className="stat-icon">
-                        <DollarSign size={22} />
+                        <DollarSign size={20} />
                       </div>
-                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', fontWeight: 600 }}>Net Savings</p>
+                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 600 }}>Savings Rate</p>
                     </div>
                     <div>
-                      <h2 style={{ fontSize: '2rem', fontWeight: 800, margin: '0.5rem 0', color: summary.savings >= 0 ? 'var(--success)' : 'var(--danger)', fontFamily: 'Outfit' }}>
-                        ₹{(summary.savings / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                      </h2>
-                      <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Net cashflow surplus</p>
+                      <h3 style={{ fontSize: '1.6rem', fontWeight: 800, margin: '0.25rem 0', fontFamily: 'Outfit', color: 'var(--success)' }}>
+                        {(summary.totalIncome > 0 ? ((summary.totalIncome - summary.totalSpend) / summary.totalIncome * 100) : 0).toFixed(1)}%
+                      </h3>
                     </div>
                   </div>
 
-                  <div className="glass-card stat-card" style={{ borderLeft: exceededBudgetsCount > 0 ? '3px solid var(--danger)' : '1px solid var(--glass-border)' }}>
+                  {/* Cash Flow */}
+                  <div className="glass-card stat-card" style={{ borderLeft: '3px solid ' + (summary.savings >= 0 ? 'var(--success)' : 'var(--danger)') }}>
                     <div>
-                      <div className="stat-icon" style={{ color: exceededBudgetsCount > 0 ? 'var(--danger)' : 'var(--success)' }}>
-                        <AlertCircle size={22} />
+                      <div className="stat-icon" style={{ color: summary.savings >= 0 ? 'var(--success)' : 'var(--danger)' }}>
+                        <RefreshCw size={20} />
                       </div>
-                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', fontWeight: 600 }}>Budget Status</p>
+                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 600 }}>Cash Flow</p>
                     </div>
                     <div>
-                      <h2 style={{ fontSize: '1.5rem', fontWeight: 800, margin: '0.5rem 0', fontFamily: 'Outfit' }}>
-                        {exceededBudgetsCount > 0 ? `${exceededBudgetsCount} Limit Exceeded` : summary.budgetStatus}
-                      </h2>
-                      <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
-                        {exceededBudgetsCount > 0 ? 'Action required in Budgets tab' : 'Spend limits are within green zone'}
+                      <h3 style={{ fontSize: '1.6rem', fontWeight: 800, margin: '0.25rem 0', fontFamily: 'Outfit', color: summary.savings >= 0 ? 'var(--success)' : 'var(--danger)' }}>
+                        {summary.savings >= 0 ? '+' : ''}₹{(summary.savings / 100).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                      </h3>
+                    </div>
+                  </div>
+
+                  {/* Highest Spending Category */}
+                  <div className="glass-card stat-card">
+                    <div>
+                      <div className="stat-icon" style={{ color: 'var(--accent-pink)' }}>
+                        <CreditCard size={20} />
+                      </div>
+                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 600 }}>Top Spend Category</p>
+                    </div>
+                    <div>
+                      <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '0.25rem 0', fontFamily: 'Outfit', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                        {summary.categories && summary.categories.length > 0 
+                          ? summary.categories.reduce((max, cat) => cat.value > max.value ? cat : max, summary.categories[0]).name
+                          : 'None'}
+                      </h3>
+                      <p style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>
+                        ₹{(summary.categories && summary.categories.length > 0 
+                          ? summary.categories.reduce((max, cat) => cat.value > max.value ? cat : max, summary.categories[0]).value / 100
+                          : 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })} spent
                       </p>
+                    </div>
+                  </div>
+
+                  {/* Monthly Goal Progress */}
+                  <div className="glass-card stat-card">
+                    <div>
+                      <div className="stat-icon" style={{ color: 'var(--accent-cyan)' }}>
+                        <Target size={20} />
+                      </div>
+                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 600 }}>Goal Progress</p>
+                    </div>
+                    <div>
+                      <h3 style={{ fontSize: '1.6rem', fontWeight: 800, margin: '0.25rem 0', fontFamily: 'Outfit', color: 'var(--accent-cyan)' }}>
+                        {goals.length > 0
+                          ? (goals.reduce((sum, g) => sum + (g.targetAmount > 0 ? (g.currentAmount / g.targetAmount) : 0), 0) / goals.length * 100).toFixed(0) + '%'
+                          : '0%'}
+                      </h3>
+                      <p style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>{goals.length} active goals</p>
                     </div>
                   </div>
                 </section>
 
+                {/* Insights Row */}
+                <div className="grid-insights">
+                  {/* FinScore Widget */}
+                  <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', justifyContent: 'center' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <h4 style={{ fontSize: '1.1rem', fontWeight: 700 }}>Financial Health Score</h4>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>Dynamic metric calculating budgeting & saving health</p>
+                      </div>
+                      <div style={{
+                        width: '70px',
+                        height: '70px',
+                        borderRadius: '50%',
+                        border: '5px solid var(--glass-border)',
+                        borderTopColor: summary.finScore >= 70 ? 'var(--success)' : summary.finScore >= 50 ? 'var(--warning)' : 'var(--danger)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 800,
+                        fontSize: '1.3rem',
+                        fontFamily: 'Outfit',
+                        boxShadow: '0 0 15px ' + (summary.finScore >= 70 ? 'rgba(16,185,129,0.3)' : 'rgba(245,158,11,0.3)')
+                      }}>
+                        {summary.finScore}
+                      </div>
+                    </div>
+                    <div className="budget-progress-container" style={{ height: '6px' }}>
+                      <div className="budget-progress-bar" style={{
+                        width: `${summary.finScore}%`,
+                        backgroundColor: summary.finScore >= 70 ? 'var(--success)' : summary.finScore >= 50 ? 'var(--warning)' : 'var(--danger)'
+                      }} />
+                    </div>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+                      {summary.finScore >= 80 ? "🎉 Excellent! Your cash flows are extremely optimized with healthy savings." :
+                       summary.finScore >= 60 ? "👍 Good job. Focus on keeping your subscriptions and category budgets under control." :
+                       "⚠️ Action required: High burn rate or exceeded budgets are impacting your score."}
+                    </p>
+                  </div>
+
+                  {/* Anomalies Widget */}
+                  <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div>
+                      <h4 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <AlertCircle size={18} /> Financial Alerts
+                      </h4>
+                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>Unusual transactions or budget anomalies detected</p>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '120px', overflowY: 'auto' }}>
+                      {summary.anomalies && summary.anomalies.length > 0 ? (
+                        summary.anomalies.map((anomaly, idx) => (
+                          <div key={idx} style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', fontSize: '0.8rem', background: 'rgba(244,63,94,0.05)', padding: '0.5rem', borderRadius: '0.5rem', border: '1px solid rgba(244,63,94,0.1)' }}>
+                            <AlertCircle size={14} color="var(--danger)" style={{ flexShrink: 0, marginTop: '2px' }} />
+                            <span>{anomaly}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontSize: '0.8rem', background: 'rgba(16,185,129,0.05)', padding: '0.5rem', borderRadius: '0.5rem', border: '1px solid rgba(16,185,129,0.1)', color: 'var(--success)' }}>
+                          <AlertCircle size={14} color="var(--success)" />
+                          <span>No anomalies detected. Your spending is normal.</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
                 {/* Dashboard Charts */}
                 <section>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '1.75rem', marginBottom: '1.75rem', flexWrap: 'wrap' }}>
+                  <div className="grid-charts">
                     <SpendingTrend data={transactions.slice(0, 15).reverse().map(t => ({ date: new Date(t.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }), amount: t.amount }))} />
                     <CategoryBreakdown data={summary.categories || []} />
                   </div>
@@ -479,6 +670,19 @@ const App = () => {
 
                 {/* Filters Panel */}
                 <div className="filter-bar">
+                  <div className="filter-group" style={{ flex: '1 1 200px' }}>
+                    <label htmlFor="filter-search">Search Description</label>
+                    <input 
+                      id="filter-search"
+                      type="text"
+                      className="category-select"
+                      placeholder="e.g. Netflix, Swiggy..."
+                      value={filterSearch}
+                      onChange={e => setFilterSearch(e.target.value)}
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+
                   <div className="filter-group">
                     <label htmlFor="filter-cat">Category</label>
                     <select 
@@ -505,6 +709,47 @@ const App = () => {
                       <option value="ALL">All Types</option>
                       <option value="INCOME">Income</option>
                       <option value="EXPENSE">Expense</option>
+                    </select>
+                  </div>
+
+                  <div className="filter-group">
+                    <label htmlFor="filter-min">Min Amount (₹)</label>
+                    <input 
+                      id="filter-min"
+                      type="number"
+                      className="category-select"
+                      placeholder="Min"
+                      value={filterMinAmount}
+                      onChange={e => setFilterMinAmount(e.target.value)}
+                      style={{ width: '100px' }}
+                    />
+                  </div>
+
+                  <div className="filter-group">
+                    <label htmlFor="filter-max">Max Amount (₹)</label>
+                    <input 
+                      id="filter-max"
+                      type="number"
+                      className="category-select"
+                      placeholder="Max"
+                      value={filterMaxAmount}
+                      onChange={e => setFilterMaxAmount(e.target.value)}
+                      style={{ width: '100px' }}
+                    />
+                  </div>
+
+                  <div className="filter-group">
+                    <label htmlFor="filter-sort">Sort By</label>
+                    <select 
+                      id="filter-sort"
+                      className="category-select" 
+                      value={filterSortOrder} 
+                      onChange={e => setFilterSortOrder(e.target.value)}
+                    >
+                      <option value="date-desc">Newest First</option>
+                      <option value="date-asc">Oldest First</option>
+                      <option value="amount-desc">Highest Amount</option>
+                      <option value="amount-asc">Lowest Amount</option>
                     </select>
                   </div>
 
@@ -538,6 +783,10 @@ const App = () => {
                       setFilterType('ALL');
                       setFilterStartDate('');
                       setFilterEndDate('');
+                      setFilterSearch('');
+                      setFilterMinAmount('');
+                      setFilterMaxAmount('');
+                      setFilterSortOrder('date-desc');
                     }}
                   >
                     Clear Filters
@@ -621,8 +870,15 @@ const App = () => {
 
             {/* Budgets Tab */}
             {activeTab === 'budgets' && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '2rem', flexWrap: 'wrap' }}>
-                {/* Budget status list */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                {/* Visual Analytics Row */}
+                <div className="grid-budget-analytics">
+                  <CategoryPieChart data={summary.categories || []} />
+                  <MonthlyTrendChart data={summary.monthlyTrend || []} />
+                </div>
+
+                <div className="grid-budget-layout">
+                  {/* Budget status list */}
                 <div className="glass-card">
                   <h3 style={{ marginBottom: '0.25rem', fontSize: '1.25rem', fontWeight: 700 }}>Monthly Limits & Targets</h3>
                   <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.875rem' }}>
@@ -745,7 +1001,8 @@ const App = () => {
                   </form>
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
             {/* Subscriptions Tab */}
             {activeTab === 'subscriptions' && (
@@ -782,7 +1039,7 @@ const App = () => {
                     </div>
                   </div>
 
-                  <div className="glass-card" style={{ gridColumn: 'span 2', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <div className="glass-card sub-info-card" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     <Info size={24} style={{ color: 'var(--accent-cyan)' }} />
                     <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
                       <strong>AI Detection Rule</strong>: Our parser categorizes recurring items, subscriptions, and SaaS payments based on payment frequency and transactional descriptions. Correct any misclassifications below by reassigning their category.
@@ -840,7 +1097,7 @@ const App = () => {
               <div className="glass-card">
                 <div style={{ marginBottom: '1.5rem' }}>
                   <h3 style={{ fontSize: '1.25rem', fontWeight: 700 }}>AI Financial Advisory</h3>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Deep contextual analytics by Gemini 1.5 Pro</p>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Deep contextual analytics by Gemini 2.5 Flash</p>
                 </div>
                 <AIInsights />
               </div>
@@ -939,8 +1196,38 @@ const App = () => {
                 )}
               </div>
             )}
+
+            {/* Savings Goals Tab */}
+            {activeTab === 'goals' && (
+              <div className="glass-card">
+                <SavingsGoals />
+              </div>
+            )}
           </>
         )}
+        {/* Mobile Bottom Navigation */}
+        <nav className="mobile-bottom-nav">
+          <button className={`bottom-nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
+            <LayoutDashboard size={20} />
+            <span>Home</span>
+          </button>
+          <button className={`bottom-nav-item ${activeTab === 'transactions' ? 'active' : ''}`} onClick={() => setActiveTab('transactions')}>
+            <Receipt size={20} />
+            <span>Txns</span>
+          </button>
+          <button className={`bottom-nav-item ${activeTab === 'budgets' ? 'active' : ''}`} onClick={() => setActiveTab('budgets')}>
+            <PiggyBank size={20} />
+            <span>Budget</span>
+          </button>
+          <button className={`bottom-nav-item ${activeTab === 'ai' ? 'active' : ''}`} onClick={() => setActiveTab('ai')}>
+            <Sparkles size={20} />
+            <span>AI</span>
+          </button>
+          <button className="bottom-nav-item" onClick={() => setMobileMenuOpen(true)}>
+            <Menu size={20} />
+            <span>More</span>
+          </button>
+        </nav>
       </main>
 
       {showUpload && (

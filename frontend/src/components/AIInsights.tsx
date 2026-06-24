@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { Sparkles, TrendingUp, ShieldAlert, PieChart } from 'lucide-react';
 import { api } from '../services/api';
 
 interface Message {
@@ -18,6 +19,12 @@ export const AIInsights: React.FC = () => {
   const [inputMessage, setInputMessage] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const [suggestionPills, setSuggestionPills] = useState<string[]>([
+    "Where did I overspend?",
+    "Can I afford a ₹50,000 laptop?",
+    "What is my burn rate?",
+    "Review my budget status"
+  ]);
 
   const fetchInsights = async (force = false) => {
     if (!force && hasFetched.current && insights) return;
@@ -61,6 +68,9 @@ export const AIInsights: React.FC = () => {
       const res = await api.ai.chat(textToSend, chatHistory);
       const botMsg: Message = { role: 'assistant', content: res.data.reply };
       setMessages(prev => [...prev, botMsg]);
+      if (res.data.suggestedPrompts && res.data.suggestedPrompts.length > 0) {
+        setSuggestionPills(res.data.suggestedPrompts);
+      }
     } catch (err) {
       console.error('Chat error:', err);
       setMessages(prev => [...prev, { role: 'assistant', content: "I'm sorry, I encountered an error communicating with my advisor engine. Please verify your connection and try again." }]);
@@ -74,20 +84,15 @@ export const AIInsights: React.FC = () => {
     handleSendMessage(inputMessage);
   };
 
-  const suggestionPills = [
-    "Review my budget status",
-    "Give me three savings tips",
-    "What is my biggest expense?",
-    "How can I build an emergency fund?"
-  ];
-
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.3fr', gap: '2rem', flexWrap: 'wrap' }}>
+    <div className="grid-ai-panel">
       
       {/* Left Panel: Static Insights */}
       <div className="glass-card" style={{ height: 'fit-content' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-          <h4 style={{ fontSize: '1.1rem', fontWeight: 700 }}>Highlights & Recommendations</h4>
+          <h4 style={{ fontSize: '1.15rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Sparkles size={18} color="var(--accent-secondary)" /> Data-Driven Recommendations
+          </h4>
           <button 
             className="btn-icon" 
             onClick={() => fetchInsights(true)} 
@@ -109,20 +114,35 @@ export const AIInsights: React.FC = () => {
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{insights.message}</p>
         ) : insights ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div className="insight-item">
-              <p className="insight-tag">SUMMARY</p>
+            <div className="insight-item" style={{ borderLeft: '4px solid var(--accent-primary)', background: 'rgba(99, 102, 241, 0.02)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                <Sparkles size={14} color="var(--accent-primary)" />
+                <p className="insight-tag" style={{ margin: 0 }}>SUMMARY</p>
+              </div>
               <p style={{ fontSize: '0.9rem', lineHeight: '1.4' }}>{insights.summary}</p>
             </div>
-            <div className="insight-item highlight">
-              <p className="insight-tag">SAVING OPPORTUNITY</p>
+            
+            <div className="insight-item highlight" style={{ borderLeft: '4px solid var(--success)', background: 'rgba(16, 185, 129, 0.02)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                <TrendingUp size={14} color="var(--success)" />
+                <p className="insight-tag" style={{ margin: 0 }}>SAVING OPPORTUNITY</p>
+              </div>
               <p style={{ fontSize: '0.9rem', lineHeight: '1.4' }}>{insights.savingTip}</p>
             </div>
-            <div className="insight-item">
-              <p className="insight-tag">SPENDING ANOMALIES</p>
+            
+            <div className="insight-item" style={{ borderLeft: '4px solid var(--danger)', background: 'rgba(244, 63, 94, 0.02)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                <ShieldAlert size={14} color="var(--danger)" />
+                <p className="insight-tag" style={{ margin: 0 }}>SPENDING ANOMALIES</p>
+              </div>
               <p style={{ fontSize: '0.9rem', lineHeight: '1.4' }}>{insights.anomalies || "No unusual activities detected this period."}</p>
             </div>
-            <div className="insight-item">
-              <p className="insight-tag">TOP CATEGORY</p>
+            
+            <div className="insight-item" style={{ borderLeft: '4px solid var(--accent-cyan)', background: 'rgba(14, 165, 233, 0.02)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                <PieChart size={14} color="var(--accent-cyan)" />
+                <p className="insight-tag" style={{ margin: 0 }}>TOP CATEGORY</p>
+              </div>
               <p style={{ fontSize: '0.9rem', lineHeight: '1.4', fontWeight: 600, color: 'var(--accent-cyan)' }}>
                 {insights.topCategory || "Analyzing..."}
               </p>
@@ -136,7 +156,7 @@ export const AIInsights: React.FC = () => {
       </div>
 
       {/* Right Panel: Chat Assistant */}
-      <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', height: '560px' }}>
+      <div className="glass-card ai-chat-container">
         <h4 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.5rem' }}>Chat with FinAI</h4>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '1rem' }}>
           Personalized advisor trained on your custom transactional files.

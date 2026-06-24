@@ -83,7 +83,16 @@ export const chatWithAI = async (req: any, res: Response) => {
     };
 
     const reply = await AIService.chat(message, history || [], financialContext);
-    return res.json({ reply });
+    
+    // Suggest next prompts based on the context
+    const suggestedPrompts = [
+      "Where did I overspend this month?",
+      "How much can I save yearly?",
+      "Which subscriptions should I cancel?",
+      "Can I afford a ₹50,000 laptop?"
+    ];
+
+    return res.json({ reply, suggestedPrompts });
   } catch (error) {
     logger.error(error, 'AI Chat Controller Error');
     return res.status(500).json({ error: 'Failed to process AI chat message' });

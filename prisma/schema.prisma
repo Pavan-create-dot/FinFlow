@@ -21,6 +21,7 @@ model User {
   transactions  Transaction[]
   categories    UserCategory[]
   budgets       Budget[]
+  savingsGoals  SavingsGoal[]
 }
 
 model Statement {
@@ -94,4 +95,18 @@ model Budget {
   updatedAt   DateTime @updatedAt
 
   @@unique([userId, categoryId])
+}
+
+model SavingsGoal {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  name          String
+  targetAmount  BigInt   // Stored in paise/cents
+  currentAmount BigInt   @default(0) // Stored in paise/cents
+  deadline      DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userId])
 }
