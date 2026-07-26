@@ -23,6 +23,7 @@ import {
 import { SpendingTrend, CategoryBreakdown, MonthlyTrendChart, CategoryPieChart } from './components/DashboardCharts';
 import { Auth } from './components/Auth';
 import { UploadModal } from './components/UploadModal';
+import { Logo } from './components/Logo';
 import { AddTransactionModal } from './components/AddTransactionModal';
 import { TransactionTable } from './components/TransactionTable';
 import { AIInsights } from './components/AIInsights';
@@ -359,8 +360,7 @@ const App = () => {
       {/* Mobile Header */}
       <header className="mobile-header">
         <div className="logo">
-          <div className="logo-icon">🗲</div>
-          Fin<span>Flow</span>
+          <Logo size="sm" />
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           <button className="hamburger-btn" onClick={() => setShowUpload(true)} title="Upload Statement">
@@ -377,9 +377,8 @@ const App = () => {
 
       {/* Sidebar */}
       <aside className={`sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
-        <div className="logo">
-          <div className="logo-icon">🗲</div>
-          Fin<span>Flow</span>
+        <div className="logo" style={{ marginBottom: '1rem' }}>
+          <Logo size="md" />
         </div>
         <nav className="nav-menu">
           <div 

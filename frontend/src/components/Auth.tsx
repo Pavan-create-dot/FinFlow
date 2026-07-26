@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { api } from '../services/api';
+import { Logo } from './Logo';
 
 interface AuthProps {
   onLogin: (token: string) => void;
@@ -43,7 +44,10 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
   return (
     <div className="auth-container">
       <div className="glass-card auth-card">
-        <h2 style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
+          <Logo variant="full" size="lg" showTagline={true} />
+        </div>
+        <h2 style={{ marginBottom: '1.5rem', textAlign: 'center', fontSize: '1.25rem', opacity: 0.9 }}>
           {isLogin ? 'Welcome Back' : 'Create Account'}
         </h2>
         
