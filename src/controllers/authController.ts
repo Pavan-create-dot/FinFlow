@@ -19,10 +19,11 @@ export const register = async (req: Request, res: Response) => {
     });
 
     // Never return the hashed password to the client
-    const { passwordHash, ...safeUser } = user;
+    const safeUser: any = { ...user };
+    delete safeUser.passwordHash;
     const tokens = generateTokens({ id: user.id, email: user.email });
     return res.status(201).json({ user: safeUser, ...tokens });
-  } catch (error) {
+  } catch {
     return res.status(400).json({ error: 'User already exists' });
   }
 };
@@ -41,7 +42,8 @@ export const login = async (req: Request, res: Response) => {
     }
 
     // Never return the hashed password to the client
-    const { passwordHash, ...safeUser } = user;
+    const safeUser: any = { ...user };
+    delete safeUser.passwordHash;
     const tokens = generateTokens({ id: user.id, email: user.email });
     return res.json({ user: safeUser, ...tokens });
   } catch (error) {

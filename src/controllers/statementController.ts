@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { Queue } from 'bullmq';
 import { serializePrisma } from '../utils/serializer';
 import { encrypt, decrypt } from '../utils/encryption';

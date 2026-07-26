@@ -93,7 +93,7 @@ export class AIService {
             isSubscription: false,
             category: 'Other'
           });
-        } catch (e) {
+        } catch {
           // Skip malformed lines
         }
       }

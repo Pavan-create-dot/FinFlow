@@ -25,7 +25,7 @@ export const getTransactions = async (req: any, res: Response) => {
   if (sortOrder === 'amount-asc') orderBy = { amount: 'asc' };
 
   try {
-    let transactions = await prisma.transaction.findMany({
+    const transactions = await prisma.transaction.findMany({
       where: {
         userId,
         categoryId: categoryFilter,
@@ -129,7 +129,6 @@ export const getAggregates = async (req: any, res: Response) => {
     // Budget Discipline (Max +10)
     if (budgets.length > 0) {
       finScore += 5; // Bonus for having budgets
-      const exceeded = budgets.filter(b => false).length; // Need actual spent to calculate, simplifying for now
       if (totals.budgetStatus === 'Healthy') finScore += 5;
       else finScore -= 5;
     }
