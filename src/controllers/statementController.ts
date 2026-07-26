@@ -1,33 +1,7 @@
 import { Response } from 'express';
-import { Queue } from 'bullmq';
+import { StatementService } from '../services/statementService';
 import { serializePrisma } from '../utils/serializer';
-import { encrypt, decrypt } from '../utils/encryption';
-import { prisma } from '../lib/prisma';
 import { logger } from '../utils/logger';
-
-let _pdfQueue: Queue | null = null;
-
-function getPdfQueue(): Queue {
-  if (!_pdfQueue) {
-    const redisConnection = process.env.REDIS_URL
-      ? { url: process.env.REDIS_URL, enableOfflineQueue: false, maxRetriesPerRequest: null }
-      : {
-          host: process.env.REDIS_HOST || 'localhost',
-          port: parseInt(process.env.REDIS_PORT || '6379'),
-          enableOfflineQueue: false,
-          maxRetriesPerRequest: null,
-        };
-
-    _pdfQueue = new Queue('pdf-processing', {
-      connection: redisConnection as any,
-    });
-
-    _pdfQueue.on('error', (err) => {
-      logger.error(err, 'BullMQ Queue Redis connection error');
-    });
-  }
-  return _pdfQueue;
-}
 
 export const uploadStatement = async (req: any, res: Response) => {
   try {
@@ -36,74 +10,27 @@ export const uploadStatement = async (req: any, res: Response) => {
     }
 
     const { bankName } = req.body;
-    const userId = req.user.id;
-
-    // 1. Create DB record for the statement (with encrypted details)
-    const encryptedFileName = encrypt(req.file.originalname) as string;
-    const encryptedFileUrl = req.file.path ? encrypt(req.file.path) : null;
-
-    const statement = await prisma.statement.create({
-      data: {
-        userId,
-        fileName: encryptedFileName,
-        fileUrl: encryptedFileUrl,
-        bankName: bankName || 'Unknown Bank',
-        status: 'PENDING',
-      },
-    });
-
-    // 2. Add to BullMQ for processing
-    try {
-      const queue = getPdfQueue();
-      await queue.add('process-pdf', {
-        statementId: statement.id,
-        userId: userId,
-        filePath: req.file.path,
-      }, {
-        attempts: 3,
-        backoff: {
-          type: 'exponential',
-          delay: 5000,
-        },
-      });
-    } catch (redisErr) {
-      logger.error(redisErr, 'Redis unavailable - cannot queue PDF processing');
-      await prisma.statement.update({
-        where: { id: statement.id },
-        data: { status: 'FAILED', errorMessage: 'Processing service temporarily unavailable' },
-      });
-      return res.status(503).json({
-        error: 'PDF processing service is temporarily unavailable. Please try again later.',
-        statementId: statement.id,
-      });
-    }
+    const statementId = await StatementService.uploadStatement(req.user.id, req.file, bankName);
 
     return res.status(202).json({
       message: 'Statement uploaded and queued for processing',
-      statementId: statement.id,
+      statementId,
     });
-  } catch (error) {
+  } catch (error: any) {
     logger.error(error, 'Upload Error');
+    if (error.message === 'REDIS_UNAVAILABLE') {
+      return res.status(503).json({
+        error: 'PDF processing service is temporarily unavailable. Please try again later.'
+      });
+    }
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 };
 
 export const getStatements = async (req: any, res: Response) => {
   try {
-    const userId = req.user.id;
-    const statements = await prisma.statement.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    const decryptedStatements = statements.map(s => ({
-      ...s,
-      fileName: decrypt(s.fileName) || '',
-      fileUrl: s.fileUrl ? decrypt(s.fileUrl) || null : null,
-      errorMessage: s.errorMessage ? decrypt(s.errorMessage) || null : null,
-    }));
-
-    return res.json(serializePrisma(decryptedStatements));
+    const data = await StatementService.getStatements(req.user.id);
+    return res.json(serializePrisma(data));
   } catch (error) {
     logger.error(error, 'Fetch Statements Error');
     return res.status(500).json({ error: 'Failed to fetch statements' });
@@ -112,26 +39,13 @@ export const getStatements = async (req: any, res: Response) => {
 
 export const deleteStatement = async (req: any, res: Response) => {
   try {
-    const { id } = req.params;
-    const userId = req.user.id;
-
-    const statement = await prisma.statement.findUnique({ where: { id } });
-    if (!statement || statement.userId !== userId) {
+    await StatementService.deleteStatement(req.user.id, req.params.id);
+    return res.json({ message: 'Statement deleted successfully' });
+  } catch (error: any) {
+    logger.error(error, 'Delete Statement Error');
+    if (error.message === 'Statement not found') {
       return res.status(404).json({ error: 'Statement not found' });
     }
-
-    // Delete associated transactions first
-    await prisma.transaction.deleteMany({
-      where: { statementId: id }
-    });
-
-    await prisma.statement.delete({
-      where: { id }
-    });
-
-    return res.json({ message: 'Statement deleted successfully' });
-  } catch (error) {
-    logger.error(error, 'Delete Statement Error');
     return res.status(500).json({ error: 'Failed to delete statement' });
   }
 };
