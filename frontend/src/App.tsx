@@ -23,7 +23,6 @@ import {
 import { SpendingTrend, CategoryBreakdown, MonthlyTrendChart, CategoryPieChart } from './components/DashboardCharts';
 import { Auth } from './components/Auth';
 import { UploadModal } from './components/UploadModal';
-import { Logo } from './components/Logo';
 import { AddTransactionModal } from './components/AddTransactionModal';
 import { TransactionTable } from './components/TransactionTable';
 import { AIInsights } from './components/AIInsights';
@@ -359,8 +358,9 @@ const App = () => {
     <div className="dashboard-layout">
       {/* Mobile Header */}
       <header className="mobile-header">
-        <div className="logo">
-          <Logo size="sm" />
+        <div className="logo" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <img src="/logo.svg" alt="FinFlow Logo" style={{ width: '34px', height: '34px', filter: 'drop-shadow(0px 2px 6px rgba(0, 245, 212, 0.35))' }} />
+          <span style={{ fontSize: '1.35rem', fontWeight: 800 }}>Fin<span style={{ color: '#00F5D4' }}>Flow</span></span>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           <button className="hamburger-btn" onClick={() => setShowUpload(true)} title="Upload Statement">
@@ -377,8 +377,11 @@ const App = () => {
 
       {/* Sidebar */}
       <aside className={`sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
-        <div className="logo" style={{ marginBottom: '1rem' }}>
-          <Logo size="md" />
+        <div className="logo" style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+          <img src="/logo.svg" alt="FinFlow Logo" style={{ width: '44px', height: '44px', filter: 'drop-shadow(0px 2px 8px rgba(0, 245, 212, 0.35))' }} />
+          <span style={{ fontSize: '1.75rem', fontWeight: 800, letterSpacing: '-0.03em', fontFamily: "'Outfit', sans-serif" }}>
+            Fin<span style={{ color: '#00F5D4' }}>Flow</span>
+          </span>
         </div>
         <nav className="nav-menu">
           <div 

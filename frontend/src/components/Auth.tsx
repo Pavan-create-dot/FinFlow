@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { api } from '../services/api';
-import { Logo } from './Logo';
 
 interface AuthProps {
   onLogin: (token: string) => void;
@@ -44,8 +43,14 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
   return (
     <div className="auth-container">
       <div className="glass-card auth-card">
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
-          <Logo variant="full" size="lg" showTagline={true} />
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1.5rem', gap: '0.5rem' }}>
+          <img src="/logo.svg" alt="FinFlow Logo" style={{ width: '64px', height: '64px', filter: 'drop-shadow(0px 2px 10px rgba(0, 245, 212, 0.4))' }} />
+          <div style={{ fontSize: '2rem', fontWeight: 800, fontFamily: "'Outfit', sans-serif" }}>
+            Fin<span style={{ color: '#00F5D4' }}>Flow</span>
+          </div>
+          <div style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.12em', color: '#00F5D4', textTransform: 'uppercase' }}>
+            PLAN. TRACK. GROW.
+          </div>
         </div>
         <h2 style={{ marginBottom: '1.5rem', textAlign: 'center', fontSize: '1.25rem', opacity: 0.9 }}>
           {isLogin ? 'Welcome Back' : 'Create Account'}
