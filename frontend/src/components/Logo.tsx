@@ -18,18 +18,18 @@ export const Logo: React.FC<LogoProps> = ({
     if (typeof size === 'number') return size;
     switch (size) {
       case 'sm':
-        return 32;
+        return 36;
       case 'lg':
-        return 64;
+        return 68;
       case 'md':
       default:
-        return 42;
+        return 46;
     }
   };
 
   const iconPx = getIconSize();
 
-  // SVG Icon Mark matching the FinFlow logo image
+  // SVG Icon Mark matching the FinFlow logo image, optimized for high visibility on all backgrounds
   const IconMark = (
     <svg
       width={iconPx}
@@ -38,78 +38,82 @@ export const Logo: React.FC<LogoProps> = ({
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className="finflow-logo-svg"
-      style={{ display: 'block', flexShrink: 0 }}
+      style={{
+        display: 'block',
+        flexShrink: 0,
+        filter: 'drop-shadow(0px 2px 8px rgba(0, 245, 212, 0.3))',
+      }}
     >
       <defs>
-        {/* Outer Circular Arc Gradient */}
-        <linearGradient id="ff-arc-grad" x1="20%" y1="10%" x2="90%" y2="90%">
-          <stop offset="0%" stopColor="#00D2B8" />
-          <stop offset="60%" stopColor="#00A896" />
-          <stop offset="100%" stopColor="#0A2540" />
+        {/* Outer Circular Arc Gradient: Bright Electric Cyan to Blue */}
+        <linearGradient id="ff-arc-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#00F5D4" />
+          <stop offset="45%" stopColor="#00D2B8" />
+          <stop offset="100%" stopColor="#2563EB" />
         </linearGradient>
 
-        {/* Arrow & Bars Teal Gradient */}
+        {/* Arrow & Bars Gradient: Vibrant Teal to Cyan */}
         <linearGradient id="ff-teal-grad" x1="0%" y1="100%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#00A896" />
-          <stop offset="50%" stopColor="#00C9A7" />
-          <stop offset="100%" stopColor="#00E5BF" />
+          <stop offset="0%" stopColor="#00C9A7" />
+          <stop offset="50%" stopColor="#00F5D4" />
+          <stop offset="100%" stopColor="#38BDF8" />
         </linearGradient>
 
-        {/* Main F Navy Gradient */}
+        {/* Main F Gradient: White to Sky Blue for high contrast on dark themes */}
         <linearGradient id="ff-f-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#1E3A8A" />
-          <stop offset="40%" stopColor="#0F2C59" />
-          <stop offset="100%" stopColor="#0B192C" />
+          <stop offset="0%" stopColor="#FFFFFF" />
+          <stop offset="55%" stopColor="#F0F9FF" />
+          <stop offset="100%" stopColor="#38BDF8" />
         </linearGradient>
       </defs>
 
       {/* Outer Circular Swoosh Arc */}
       <path
-        d="M 65 48 
-           C 85 18, 142 16, 160 46 
-           C 176 72, 174 116, 146 142 
-           C 122 164, 76 166, 56 142 
-           C 50 135, 68 140, 88 136 
-           C 122 128, 150 102, 144 70 
-           C 138 42, 108 28, 76 38 
-           C 66 41, 58 46, 65 48 Z"
+        d="M 60 45 
+           C 82 14, 148 14, 166 45 
+           C 182 72, 178 120, 148 148 
+           C 120 172, 70 170, 50 144 
+           C 44 136, 64 142, 86 138 
+           C 124 130, 154 102, 148 68 
+           C 142 38, 108 24, 74 35 
+           C 62 39, 53 44, 60 45 Z"
         fill="url(#ff-arc-grad)"
       />
 
       {/* Stylized Bold 'F' */}
       <path
-        d="M 62 52 
-           H 136 
-           C 142 52, 142 63, 134 63 
-           H 92 
-           L 87 90 
-           H 116 
-           C 122 90, 122 99, 116 99 
-           H 85 
-           L 72 148 
-           C 68 162, 54 158, 56 146 
-           L 78 63 
-           H 62 
-           C 56 63, 56 52, 62 52 Z"
+        d="M 58 50 
+           H 138 
+           C 145 50, 145 62, 136 62 
+           H 90 
+           L 84 92 
+           H 118 
+           C 125 92, 125 102, 118 102 
+           H 82 
+           L 68 152 
+           C 64 166, 48 162, 52 148 
+           L 76 62 
+           H 58 
+           C 50 62, 50 50, 58 50 Z"
         fill="url(#ff-f-grad)"
       />
 
       {/* Growth Chart Bars inside F loop */}
-      <rect x="94" y="118" width="11" height="18" rx="2.5" fill="url(#ff-teal-grad)" />
-      <rect x="110" y="110" width="11" height="26" rx="2.5" fill="url(#ff-teal-grad)" />
-      <rect x="126" y="100" width="11" height="36" rx="2.5" fill="url(#ff-teal-grad)" />
-      <rect x="142" y="88" width="11" height="48" rx="2.5" fill="url(#ff-teal-grad)" />
+      <rect x="94" y="118" width="11" height="20" rx="3" fill="url(#ff-teal-grad)" />
+      <rect x="110" y="108" width="11" height="30" rx="3" fill="url(#ff-teal-grad)" />
+      <rect x="126" y="96" width="11" height="42" rx="3" fill="url(#ff-teal-grad)" />
+      <rect x="142" y="82" width="11" height="56" rx="3" fill="url(#ff-teal-grad)" />
 
       {/* Upward Arrow Swoosh */}
       <path
-        d="M 82 128 Q 115 116, 146 76"
+        d="M 80 132 Q 116 118, 148 74"
         stroke="url(#ff-teal-grad)"
-        strokeWidth="6"
+        strokeWidth="7"
         strokeLinecap="round"
       />
       {/* Arrowhead */}
       <path
-        d="M 132 75 L 152 72 L 146 92 Z"
+        d="M 134 72 L 156 70 L 148 92 Z"
         fill="url(#ff-teal-grad)"
       />
     </svg>
@@ -128,7 +132,7 @@ export const Logo: React.FC<LogoProps> = ({
         display: 'inline-flex',
         flexDirection: variant === 'full' ? 'column' : 'row',
         alignItems: 'center',
-        gap: variant === 'full' ? '0.75rem' : '0.6rem',
+        gap: variant === 'full' ? '0.75rem' : '0.65rem',
       }}
     >
       {IconMark}
@@ -153,10 +157,10 @@ export const Logo: React.FC<LogoProps> = ({
             alignItems: 'center',
           }}
         >
-          <span className="brand-fin" style={{ color: 'var(--brand-fin-color, #0F2C59)' }}>
+          <span className="brand-fin" style={{ color: 'var(--brand-fin-color, #ffffff)' }}>
             Fin
           </span>
-          <span className="brand-flow" style={{ color: '#00C9A7' }}>
+          <span className="brand-flow" style={{ color: '#00F5D4' }}>
             Flow
           </span>
         </div>
@@ -176,7 +180,7 @@ export const Logo: React.FC<LogoProps> = ({
               style={{
                 flex: 1,
                 height: '1.5px',
-                background: 'linear-gradient(90deg, transparent, #00C9A7)',
+                background: 'linear-gradient(90deg, transparent, #00F5D4)',
               }}
             />
             <span
@@ -184,7 +188,7 @@ export const Logo: React.FC<LogoProps> = ({
                 fontSize: typeof size === 'number' ? `${size * 0.18}px` : size === 'sm' ? '0.55rem' : size === 'lg' ? '0.85rem' : '0.65rem',
                 fontWeight: 700,
                 letterSpacing: '0.12em',
-                color: '#00C9A7',
+                color: '#00F5D4',
                 textTransform: 'uppercase',
                 whiteSpace: 'nowrap',
               }}
@@ -195,7 +199,7 @@ export const Logo: React.FC<LogoProps> = ({
               style={{
                 flex: 1,
                 height: '1.5px',
-                background: 'linear-gradient(90deg, #00C9A7, transparent)',
+                background: 'linear-gradient(90deg, #00F5D4, transparent)',
               }}
             />
           </div>
