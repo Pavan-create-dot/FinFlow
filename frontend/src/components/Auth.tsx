@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { api } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
-interface AuthProps {
-  onLogin: (token: string) => void;
-}
-
-export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
+export const Auth: React.FC = () => {
+  const { login } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -24,17 +22,14 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
         const res = await api.auth.login({ email, password });
         data = res.data;
       } else {
-        // Fixed: register now sends firstName and lastName
         const res = await api.auth.register({ email, password, firstName, lastName });
         data = res.data;
       }
-      if (data.user && data.user.email) {
-        localStorage.setItem('userEmail', data.user.email);
-      }
-      if (data.user && data.user.firstName) {
-        localStorage.setItem('userFirstName', data.user.firstName);
-      }
-      onLogin(data.accessToken);
+      login(
+        data.accessToken,
+        data.user?.email,
+        data.user?.firstName
+      );
     } catch (err: any) {
       setError(err.response?.data?.error || 'Authentication failed');
     }
@@ -57,7 +52,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
         </h2>
         
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {/* Fixed: show name fields only on registration */}
+          {/* Show name fields only on registration */}
           {!isLogin && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               <div>
