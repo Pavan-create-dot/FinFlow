@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 
 interface LogoProps {
   variant?: 'full' | 'horizontal' | 'icon';
@@ -13,6 +13,13 @@ export const Logo: React.FC<LogoProps> = ({
   showTagline = false,
   className = '',
 }) => {
+  // Generate a unique ID per instance to prevent SVG gradient ID collisions
+  const rawId = useId();
+  const uid = rawId.replace(/[^a-zA-Z0-9]/g, '');
+  const arcGradId = `ff-arc-grad-${uid}`;
+  const tealGradId = `ff-teal-grad-${uid}`;
+  const fGradId = `ff-f-grad-${uid}`;
+
   // Determine pixel sizes based on prop
   const getIconSize = () => {
     if (typeof size === 'number') return size;
@@ -29,7 +36,7 @@ export const Logo: React.FC<LogoProps> = ({
 
   const iconPx = getIconSize();
 
-  // SVG Icon Mark matching the FinFlow logo image, optimized for high visibility on all backgrounds
+  // SVG Icon Mark matching the FinFlow logo image
   const IconMark = (
     <svg
       width={iconPx}
@@ -41,26 +48,26 @@ export const Logo: React.FC<LogoProps> = ({
       style={{
         display: 'block',
         flexShrink: 0,
-        filter: 'drop-shadow(0px 2px 8px rgba(0, 245, 212, 0.3))',
+        filter: 'drop-shadow(0px 2px 8px rgba(0, 245, 212, 0.35))',
       }}
     >
       <defs>
         {/* Outer Circular Arc Gradient: Bright Electric Cyan to Blue */}
-        <linearGradient id="ff-arc-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient id={arcGradId} x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#00F5D4" />
           <stop offset="45%" stopColor="#00D2B8" />
           <stop offset="100%" stopColor="#2563EB" />
         </linearGradient>
 
         {/* Arrow & Bars Gradient: Vibrant Teal to Cyan */}
-        <linearGradient id="ff-teal-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+        <linearGradient id={tealGradId} x1="0%" y1="100%" x2="100%" y2="0%">
           <stop offset="0%" stopColor="#00C9A7" />
           <stop offset="50%" stopColor="#00F5D4" />
           <stop offset="100%" stopColor="#38BDF8" />
         </linearGradient>
 
-        {/* Main F Gradient: White to Sky Blue for high contrast on dark themes */}
-        <linearGradient id="ff-f-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+        {/* Main F Gradient: White to Sky Blue */}
+        <linearGradient id={fGradId} x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#FFFFFF" />
           <stop offset="55%" stopColor="#F0F9FF" />
           <stop offset="100%" stopColor="#38BDF8" />
@@ -77,7 +84,7 @@ export const Logo: React.FC<LogoProps> = ({
            C 124 130, 154 102, 148 68 
            C 142 38, 108 24, 74 35 
            C 62 39, 53 44, 60 45 Z"
-        fill="url(#ff-arc-grad)"
+        fill={`url(#${arcGradId})`}
       />
 
       {/* Stylized Bold 'F' */}
@@ -95,26 +102,26 @@ export const Logo: React.FC<LogoProps> = ({
            L 76 62 
            H 58 
            C 50 62, 50 50, 58 50 Z"
-        fill="url(#ff-f-grad)"
+        fill={`url(#${fGradId})`}
       />
 
       {/* Growth Chart Bars inside F loop */}
-      <rect x="94" y="118" width="11" height="20" rx="3" fill="url(#ff-teal-grad)" />
-      <rect x="110" y="108" width="11" height="30" rx="3" fill="url(#ff-teal-grad)" />
-      <rect x="126" y="96" width="11" height="42" rx="3" fill="url(#ff-teal-grad)" />
-      <rect x="142" y="82" width="11" height="56" rx="3" fill="url(#ff-teal-grad)" />
+      <rect x="94" y="118" width="11" height="20" rx="3" fill={`url(#${tealGradId})`} />
+      <rect x="110" y="108" width="11" height="30" rx="3" fill={`url(#${tealGradId})`} />
+      <rect x="126" y="96" width="11" height="42" rx="3" fill={`url(#${tealGradId})`} />
+      <rect x="142" y="82" width="11" height="56" rx="3" fill={`url(#${tealGradId})`} />
 
       {/* Upward Arrow Swoosh */}
       <path
         d="M 80 132 Q 116 118, 148 74"
-        stroke="url(#ff-teal-grad)"
+        stroke={`url(#${tealGradId})`}
         strokeWidth="7"
         strokeLinecap="round"
       />
       {/* Arrowhead */}
       <path
         d="M 134 72 L 156 70 L 148 92 Z"
-        fill="url(#ff-teal-grad)"
+        fill={`url(#${tealGradId})`}
       />
     </svg>
   );
