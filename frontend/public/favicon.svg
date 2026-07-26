@@ -1,0 +1,47 @@
+<svg width="64" height="64" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="ff-arc-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00F5D4" />
+      <stop offset="45%" stop-color="#00D2B8" />
+      <stop offset="100%" stop-color="#2563EB" />
+    </linearGradient>
+
+    <linearGradient id="ff-teal-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00C9A7" />
+      <stop offset="50%" stop-color="#00F5D4" />
+      <stop offset="100%" stop-color="#38BDF8" />
+    </linearGradient>
+
+    <linearGradient id="ff-f-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="55%" stop-color="#F0F9FF" />
+      <stop offset="100%" stop-color="#38BDF8" />
+    </linearGradient>
+  </defs>
+
+  <path
+    d="M 60 45 C 82 14, 148 14, 166 45 C 182 72, 178 120, 148 148 C 120 172, 70 170, 50 144 C 44 136, 64 142, 86 138 C 124 130, 154 102, 148 68 C 142 38, 108 24, 74 35 C 62 39, 53 44, 60 45 Z"
+    fill="url(#ff-arc-grad)"
+  />
+
+  <path
+    d="M 58 50 H 138 C 145 50, 145 62, 136 62 H 90 L 84 92 H 118 C 125 92, 125 102, 118 102 H 82 L 68 152 C 64 166, 48 162, 52 148 L 76 62 H 58 C 50 62, 50 50, 58 50 Z"
+    fill="url(#ff-f-grad)"
+  />
+
+  <rect x="94" y="118" width="11" height="20" rx="3" fill="url(#ff-teal-grad)" />
+  <rect x="110" y="108" width="11" height="30" rx="3" fill="url(#ff-teal-grad)" />
+  <rect x="126" y="96" width="11" height="42" rx="3" fill="url(#ff-teal-grad)" />
+  <rect x="142" y="82" width="11" height="56" rx="3" fill="url(#ff-teal-grad)" />
+
+  <path
+    d="M 80 132 Q 116 118, 148 74"
+    stroke="url(#ff-teal-grad)"
+    stroke-width="7"
+    stroke-linecap="round"
+  />
+  <path
+    d="M 134 72 L 156 70 L 148 92 Z"
+    fill="url(#ff-teal-grad)"
+  />
+</svg>
