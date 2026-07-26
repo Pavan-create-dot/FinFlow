@@ -1,10 +1,11 @@
 import { Response } from 'express';
 import { AIService } from '../services/aiService';
 import { logger } from '../utils/logger';
+import { AuthRequest } from '../middlewares/auth';
 
-export const getFinancialInsights = async (req: any, res: Response) => {
+export const getFinancialInsights = async (req: AuthRequest, res: Response) => {
   try {
-    const insights = await AIService.getUserFinancialInsights(req.user.id);
+    const insights = await AIService.getUserFinancialInsights(req.user!.id);
     return res.json(insights);
   } catch (error) {
     logger.error(error, 'Insights API Error');
@@ -12,7 +13,7 @@ export const getFinancialInsights = async (req: any, res: Response) => {
   }
 };
 
-export const chatWithAI = async (req: any, res: Response) => {
+export const chatWithAI = async (req: AuthRequest, res: Response) => {
   const { message, history } = req.body;
 
   if (!message) {
@@ -20,7 +21,7 @@ export const chatWithAI = async (req: any, res: Response) => {
   }
 
   try {
-    const data = await AIService.handleUserChat(req.user.id, message, history);
+    const data = await AIService.handleUserChat(req.user!.id, message, history);
     return res.json(data);
   } catch (error) {
     logger.error(error, 'AI Chat Controller Error');

@@ -2,15 +2,16 @@ import { Response } from 'express';
 import { StatementService } from '../services/statementService';
 import { serializePrisma } from '../utils/serializer';
 import { logger } from '../utils/logger';
+import { AuthRequest } from '../middlewares/auth';
 
-export const uploadStatement = async (req: any, res: Response) => {
+export const uploadStatement = async (req: AuthRequest, res: Response) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
     const { bankName } = req.body;
-    const statementId = await StatementService.uploadStatement(req.user.id, req.file, bankName);
+    const statementId = await StatementService.uploadStatement(req.user!.id, req.file, bankName);
 
     return res.status(202).json({
       message: 'Statement uploaded and queued for processing',
@@ -27,9 +28,9 @@ export const uploadStatement = async (req: any, res: Response) => {
   }
 };
 
-export const getStatements = async (req: any, res: Response) => {
+export const getStatements = async (req: AuthRequest, res: Response) => {
   try {
-    const data = await StatementService.getStatements(req.user.id);
+    const data = await StatementService.getStatements(req.user!.id);
     return res.json(serializePrisma(data));
   } catch (error) {
     logger.error(error, 'Fetch Statements Error');
@@ -37,9 +38,9 @@ export const getStatements = async (req: any, res: Response) => {
   }
 };
 
-export const deleteStatement = async (req: any, res: Response) => {
+export const deleteStatement = async (req: AuthRequest, res: Response) => {
   try {
-    await StatementService.deleteStatement(req.user.id, req.params.id);
+    await StatementService.deleteStatement(req.user!.id, req.params.id);
     return res.json({ message: 'Statement deleted successfully' });
   } catch (error: any) {
     logger.error(error, 'Delete Statement Error');

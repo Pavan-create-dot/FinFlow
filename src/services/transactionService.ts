@@ -107,9 +107,8 @@ export class TransactionService {
     const budgets = await prisma.budget.findMany({ where: { userId } });
     let finScore = 75;
     
-    let savingsRate = 0;
     if (totals.totalIncome > 0) {
-      savingsRate = (totals.savings / totals.totalIncome) * 100;
+      const savingsRate = (totals.savings / totals.totalIncome) * 100;
       if (savingsRate > 20) finScore += 15;
       else if (savingsRate > 10) finScore += 10;
       else if (savingsRate > 0) finScore += 5;

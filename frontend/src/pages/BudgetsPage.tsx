@@ -1,12 +1,12 @@
 import React from 'react';
 import { PiggyBank, AlertCircle, Trash2 } from 'lucide-react';
 import { CategoryPieChart, MonthlyTrendChart } from '../components/DashboardCharts';
-import { Budget, Category } from '../types';
+import { Budget, Category, FinanceSummary } from '../types';
 
 interface BudgetsPageProps {
   budgets: Budget[];
   categories: Category[];
-  summary: { categories: any[]; monthlyTrend: any[] };
+  summary: FinanceSummary;
   budgetLoading: boolean;
   budgetCategory: string;
   setBudgetCategory: (val: string) => void;

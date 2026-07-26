@@ -10,21 +10,12 @@ import {
 } from 'lucide-react';
 import { SpendingTrend, CategoryBreakdown } from '../components/DashboardCharts';
 import { TransactionTable } from '../components/TransactionTable';
-import { Transaction } from '../types';
+import { Transaction, FinanceSummary, SavingsGoal } from '../types';
 
 interface DashboardPageProps {
-  summary: {
-    totalSpend: number;
-    totalIncome: number;
-    savings: number;
-    budgetStatus: string;
-    categories: any[];
-    finScore: number;
-    anomalies: string[];
-    monthlyTrend: any[];
-  };
+  summary: FinanceSummary;
   transactions: Transaction[];
-  goals: any[];
+  goals: SavingsGoal[];
 }
 
 export const DashboardPage: React.FC<DashboardPageProps> = ({

@@ -61,7 +61,7 @@ export class StatementService {
         where: { id: statement.id },
         data: { status: 'FAILED', errorMessage: encrypt('Processing service temporarily unavailable') },
       });
-      throw new Error('REDIS_UNAVAILABLE');
+      throw new Error('REDIS_UNAVAILABLE', { cause: redisErr });
     }
 
     return statement.id;

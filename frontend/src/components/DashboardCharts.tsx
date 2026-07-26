@@ -1,5 +1,9 @@
 import React from 'react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, LineChart, Line, PieChart, Pie, Legend } from 'recharts';
+import { 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
+  BarChart, Bar, Cell, LineChart, Line, PieChart, Pie, Legend 
+} from 'recharts';
+import { CategorySummary, MonthlyTrend } from '../types';
 
 // Formatting helper for Paise to Currency
 const formatCurrency = (paise: number) => {
@@ -10,7 +14,12 @@ const formatCurrency = (paise: number) => {
   }).format(paise / 100);
 };
 
-export const SpendingTrend = ({ data }: { data: any[] }) => (
+interface SpendingTrendItem {
+  date: string;
+  amount: number;
+}
+
+export const SpendingTrend = ({ data }: { data: SpendingTrendItem[] }) => (
   <div className="glass-card" style={{ height: '350px' }}>
     <h3 style={{ marginBottom: '1.5rem', color: '#fff' }}>Spending Trend</h3>
     <ResponsiveContainer width="100%" height="100%">
@@ -38,7 +47,7 @@ export const SpendingTrend = ({ data }: { data: any[] }) => (
         />
         <Tooltip 
           contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
-          formatter={(value: any) => [formatCurrency(value), 'Spent']}
+          formatter={(value: any) => [formatCurrency(Number(value)), 'Spent']}
         />
         <Area 
           type="monotone" 
@@ -53,7 +62,7 @@ export const SpendingTrend = ({ data }: { data: any[] }) => (
   </div>
 );
 
-export const CategoryBreakdown = ({ data }: { data: any[] }) => (
+export const CategoryBreakdown = ({ data }: { data: CategorySummary[] }) => (
   <div className="glass-card" style={{ height: '350px' }}>
     <h3 style={{ marginBottom: '1.5rem', color: '#fff' }}>Category Breakdown</h3>
     <ResponsiveContainer width="100%" height="100%">
@@ -80,7 +89,7 @@ export const CategoryBreakdown = ({ data }: { data: any[] }) => (
   </div>
 );
 
-export const MonthlyTrendChart = ({ data }: { data: any[] }) => (
+export const MonthlyTrendChart = ({ data }: { data: MonthlyTrend[] }) => (
   <div className="glass-card" style={{ height: '350px' }}>
     <h3 style={{ marginBottom: '1.5rem', color: '#fff' }}>Monthly Expense Trend</h3>
     <ResponsiveContainer width="100%" height="100%">
@@ -102,7 +111,7 @@ export const MonthlyTrendChart = ({ data }: { data: any[] }) => (
         />
         <Tooltip 
           contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
-          formatter={(value: any) => [formatCurrency(value), 'Spent']}
+          formatter={(value: any) => [formatCurrency(Number(value)), 'Spent']}
         />
         <Line 
           type="monotone" 
@@ -116,7 +125,7 @@ export const MonthlyTrendChart = ({ data }: { data: any[] }) => (
   </div>
 );
 
-export const CategoryPieChart = ({ data }: { data: any[] }) => {
+export const CategoryPieChart = ({ data }: { data: CategorySummary[] }) => {
   const activeData = data.filter(d => d.value > 0);
   return (
     <div className="glass-card" style={{ height: '350px', display: 'flex', flexDirection: 'column' }}>
@@ -139,7 +148,7 @@ export const CategoryPieChart = ({ data }: { data: any[] }) => {
             </Pie>
             <Tooltip 
               contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
-              formatter={(value: any) => [formatCurrency(value), 'Spent']}
+              formatter={(value: any) => [formatCurrency(Number(value)), 'Spent']}
             />
             <Legend 
               verticalAlign="bottom" 

@@ -2,10 +2,11 @@ import { Response } from 'express';
 import { TransactionService } from '../services/transactionService';
 import { serializePrisma } from '../utils/serializer';
 import { logger } from '../utils/logger';
+import { AuthRequest } from '../middlewares/auth';
 
-export const getTransactions = async (req: any, res: Response) => {
+export const getTransactions = async (req: AuthRequest, res: Response) => {
   try {
-    const data = await TransactionService.getTransactions(req.user.id, req.query);
+    const data = await TransactionService.getTransactions(req.user!.id, req.query);
     return res.json(serializePrisma(data));
   } catch (error) {
     logger.error(error, 'Fetch Transactions Error');
@@ -13,9 +14,9 @@ export const getTransactions = async (req: any, res: Response) => {
   }
 };
 
-export const getAggregates = async (req: any, res: Response) => {
+export const getAggregates = async (req: AuthRequest, res: Response) => {
   try {
-    const data = await TransactionService.getAggregates(req.user.id);
+    const data = await TransactionService.getAggregates(req.user!.id);
     return res.json(serializePrisma(data));
   } catch (error) {
     logger.error(error, 'Fetch Analytics Summary Error');
@@ -23,9 +24,9 @@ export const getAggregates = async (req: any, res: Response) => {
   }
 };
 
-export const updateTransaction = async (req: any, res: Response) => {
+export const updateTransaction = async (req: AuthRequest, res: Response) => {
   try {
-    const data = await TransactionService.updateTransaction(req.user.id, req.params.id, req.body.categoryId);
+    const data = await TransactionService.updateTransaction(req.user!.id, req.params.id, req.body.categoryId);
     return res.json(serializePrisma(data));
   } catch (error: any) {
     logger.error(error, 'Update Transaction Error');
@@ -39,7 +40,7 @@ export const updateTransaction = async (req: any, res: Response) => {
   }
 };
 
-export const getCategories = async (req: any, res: Response) => {
+export const getCategories = async (req: AuthRequest, res: Response) => {
   try {
     const data = await TransactionService.getCategories();
     return res.json(data);
@@ -49,9 +50,9 @@ export const getCategories = async (req: any, res: Response) => {
   }
 };
 
-export const createTransaction = async (req: any, res: Response) => {
+export const createTransaction = async (req: AuthRequest, res: Response) => {
   try {
-    const data = await TransactionService.createTransaction(req.user.id, req.body);
+    const data = await TransactionService.createTransaction(req.user!.id, req.body);
     return res.json(serializePrisma(data));
   } catch (error) {
     logger.error(error, 'Create Transaction Error');
@@ -59,9 +60,9 @@ export const createTransaction = async (req: any, res: Response) => {
   }
 };
 
-export const getBudgets = async (req: any, res: Response) => {
+export const getBudgets = async (req: AuthRequest, res: Response) => {
   try {
-    const data = await TransactionService.getBudgets(req.user.id);
+    const data = await TransactionService.getBudgets(req.user!.id);
     return res.json(serializePrisma(data));
   } catch (error) {
     logger.error(error, 'Fetch Budgets Error');
@@ -69,9 +70,9 @@ export const getBudgets = async (req: any, res: Response) => {
   }
 };
 
-export const upsertBudget = async (req: any, res: Response) => {
+export const upsertBudget = async (req: AuthRequest, res: Response) => {
   try {
-    const data = await TransactionService.upsertBudget(req.user.id, req.body.categoryId, req.body.amount);
+    const data = await TransactionService.upsertBudget(req.user!.id, req.body.categoryId, req.body.amount);
     return res.json(serializePrisma(data));
   } catch (error) {
     logger.error(error, 'Upsert Budget Error');
@@ -79,9 +80,9 @@ export const upsertBudget = async (req: any, res: Response) => {
   }
 };
 
-export const deleteBudget = async (req: any, res: Response) => {
+export const deleteBudget = async (req: AuthRequest, res: Response) => {
   try {
-    await TransactionService.deleteBudget(req.user.id, req.params.id);
+    await TransactionService.deleteBudget(req.user!.id, req.params.id);
     return res.json({ message: 'Budget deleted successfully' });
   } catch (error: any) {
     logger.error(error, 'Delete Budget Error');
