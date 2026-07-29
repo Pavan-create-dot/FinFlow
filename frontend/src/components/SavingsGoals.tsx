@@ -36,7 +36,7 @@ export const SavingsGoals = () => {
     try {
       const res = await api.goals.create({
         name,
-        targetAmount: parseFloat(targetAmount),
+        targetAmount: Math.round(parseFloat(targetAmount) * 100),
         deadline: deadline || undefined,
       });
       setGoals([res.data, ...goals]);
@@ -51,7 +51,8 @@ export const SavingsGoals = () => {
 
   const handleUpdateProgress = async (id: string) => {
     try {
-      const res = await api.goals.updateProgress(id, parseFloat(currentAmountInput));
+      const amountInPaise = Math.round(parseFloat(currentAmountInput) * 100);
+      const res = await api.goals.updateProgress(id, amountInPaise);
       setGoals(goals.map(g => g.id === id ? res.data : g));
       setEditingGoalId(null);
     } catch (err) {
