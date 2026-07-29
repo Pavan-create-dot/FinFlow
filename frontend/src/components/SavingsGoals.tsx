@@ -33,10 +33,12 @@ export const SavingsGoals = () => {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    const parsedTarget = parseFloat(targetAmount);
+    if (!name.trim() || isNaN(parsedTarget) || parsedTarget <= 0) return;
     try {
       const res = await api.goals.create({
-        name,
-        targetAmount: parseFloat(targetAmount),
+        name: name.trim(),
+        targetAmount: parsedTarget,
         deadline: deadline || undefined,
       });
       setGoals([res.data, ...goals]);
@@ -50,8 +52,10 @@ export const SavingsGoals = () => {
   };
 
   const handleUpdateProgress = async (id: string) => {
+    const parsed = parseFloat(currentAmountInput);
+    if (isNaN(parsed) || parsed < 0) return;
     try {
-      const res = await api.goals.updateProgress(id, parseFloat(currentAmountInput));
+      const res = await api.goals.updateProgress(id, parsed);
       setGoals(goals.map(g => g.id === id ? res.data : g));
       setEditingGoalId(null);
     } catch (err) {
@@ -157,7 +161,9 @@ export const SavingsGoals = () => {
                       style={{ padding: '0.4rem' }} 
                       value={currentAmountInput} 
                       onChange={e => setCurrentAmountInput(e.target.value)} 
-                      placeholder="New current amount"
+                      placeholder="Amount saved so far (₹)"
+                      min="0"
+                      step="0.01"
                     />
                     <button className="btn-primary" style={{ padding: '0.4rem 1rem' }} onClick={() => handleUpdateProgress(goal.id)}>Save</button>
                     <button className="btn-secondary" style={{ padding: '0.4rem 1rem' }} onClick={() => setEditingGoalId(null)}>Cancel</button>
