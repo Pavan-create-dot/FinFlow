@@ -36,7 +36,7 @@ export const SavingsGoals = () => {
     try {
       const res = await api.goals.create({
         name,
-        targetAmount: Math.round(parseFloat(targetAmount) * 100),
+        targetAmount: parseFloat(targetAmount),
         deadline: deadline || undefined,
       });
       setGoals([res.data, ...goals]);
@@ -51,8 +51,7 @@ export const SavingsGoals = () => {
 
   const handleUpdateProgress = async (id: string) => {
     try {
-      const amountInPaise = Math.round(parseFloat(currentAmountInput) * 100);
-      const res = await api.goals.updateProgress(id, amountInPaise);
+      const res = await api.goals.updateProgress(id, parseFloat(currentAmountInput));
       setGoals(goals.map(g => g.id === id ? res.data : g));
       setEditingGoalId(null);
     } catch (err) {
@@ -164,7 +163,7 @@ export const SavingsGoals = () => {
                     <button className="btn-secondary" style={{ padding: '0.4rem 1rem' }} onClick={() => setEditingGoalId(null)}>Cancel</button>
                   </div>
                 ) : (
-                  <button className="btn-secondary" style={{ padding: '0.4rem 1rem', width: 'fit-content', marginTop: '0.5rem' }} onClick={() => { setEditingGoalId(goal.id); setCurrentAmountInput((goal.currentAmount / 100).toString()); }}>
+                  <button className="btn-secondary" style={{ padding: '0.4rem 1rem', width: 'fit-content', marginTop: '0.5rem' }} onClick={() => { setEditingGoalId(goal.id); setCurrentAmountInput(String(goal.currentAmount / 100)); }}>
                     <Edit2 size={14} /> Update Progress
                   </button>
                 )}
