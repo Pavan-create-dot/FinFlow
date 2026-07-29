@@ -149,6 +149,7 @@ export const CategoryPieChart = ({ data }: { data: CategorySummary[] }) => {
             </Pie>
             <Tooltip 
               contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
+              itemStyle={{ color: 'var(--text-primary)' }}
               formatter={(value: any) => [formatCurrency(Number(value)), 'Spent']}
             />
             <Legend 
