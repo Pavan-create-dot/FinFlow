@@ -27,7 +27,7 @@ export const AIInsights: React.FC = () => {
   ]);
 
   const fetchInsights = async (force = false) => {
-    if (!force && hasFetched.current && insights) return;
+    if (!force && hasFetched.current) return;
     
     setInsightsLoading(true);
     try {
@@ -60,10 +60,10 @@ export const AIInsights: React.FC = () => {
 
     try {
       // Build history context (omit first bot greeting message)
-      const chatHistory = messages.slice(1).map(m => ({
-        role: m.role,
-        content: m.content
-      }));
+      const chatHistory = [...messages, userMsg].slice(1).map(m => ({
+          role: m.role,
+          content: m.content
+        }));
 
       const res = await api.ai.chat(textToSend, chatHistory);
       const botMsg: Message = { role: 'assistant', content: res.data.reply };

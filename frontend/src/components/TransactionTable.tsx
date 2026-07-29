@@ -18,7 +18,7 @@ export const TransactionTable: React.FC<{ transactions: Transaction[] }> = ({ tr
           <tbody>
             {transactions.map(t => (
               <tr key={t.id}>
-                <td style={{ minWidth: '100px' }}>{new Date(t.date).toLocaleDateString()}</td>
+                <td style={{ minWidth: '100px' }}>{new Date(t.date).toLocaleDateString('en-IN')}</td>
                 <td style={{ minWidth: '180px' }}>
                   <div style={{ fontWeight: '500', wordBreak: 'break-word' }}>{t.description}</div>
                 </td>

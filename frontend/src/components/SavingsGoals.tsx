@@ -103,7 +103,7 @@ export const SavingsGoals = () => {
             </div>
             <div className="form-group">
               <label>Target Amount (₹)</label>
-              <input type="number" className="form-input" value={targetAmount} onChange={e => setTargetAmount(e.target.value)} required />
+              <input type="number" className="form-input" value={targetAmount} onChange={e => setTargetAmount(e.target.value)} required min="0.01" step="0.01" />
             </div>
             <div className="form-group">
               <label>Deadline (Optional)</label>
@@ -132,7 +132,7 @@ export const SavingsGoals = () => {
                     <h4 style={{ fontWeight: 700, fontSize: '1.1rem' }}>{goal.name}</h4>
                     {goal.deadline && (
                       <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                        Target: {new Date(goal.deadline).toLocaleDateString('en-IN')}
+                        Target: {new Date(goal.deadline + 'T00:00:00').toLocaleDateString('en-IN')}
                       </span>
                     )}
                   </div>

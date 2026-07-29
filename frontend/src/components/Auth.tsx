@@ -13,9 +13,12 @@ export const Auth: React.FC = () => {
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
+  const [submitting, setSubmitting] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSubmitting(true);
     try {
       let data;
       if (isLogin) {
@@ -30,8 +33,15 @@ export const Auth: React.FC = () => {
         data.user?.email,
         data.user?.firstName
       );
+      // Clear form fields after successful auth
+      setEmail('');
+      setPassword('');
+      setFirstName('');
+      setLastName('');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Authentication failed');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -125,8 +135,8 @@ export const Auth: React.FC = () => {
           </div>
           {error && <p style={{ color: 'var(--danger)', fontSize: '0.875rem' }}>{error}</p>}
           
-          <button type="submit" className="btn-primary" style={{ marginTop: '1rem' }}>
-            {isLogin ? 'Sign In' : 'Join FinFlow'}
+          <button type="submit" className="btn-primary" style={{ marginTop: '1rem' }} disabled={submitting}>
+            {submitting ? (isLogin ? 'Signing In...' : 'Registering...') : (isLogin ? 'Sign In' : 'Join FinFlow')}
           </button>
         </form>
 
@@ -134,7 +144,14 @@ export const Auth: React.FC = () => {
           {isLogin ? "Don't have an account?" : "Already have an account?"}
           <span 
             style={{ color: 'var(--accent-primary)', cursor: 'pointer', marginLeft: '0.5rem', fontWeight: 600 }}
-            onClick={() => setIsLogin(!isLogin)}
+            onClick={() => {
+            setIsLogin(!isLogin);
+            setEmail('');
+            setPassword('');
+            setFirstName('');
+            setLastName('');
+            setError('');
+          }}
           >
             {isLogin ? 'Sign Up' : 'Log In'}
           </span>
