@@ -22,15 +22,12 @@ export const Navbar: React.FC<NavbarProps> = ({
     <>
       {/* Mobile Header */}
       <header className="mobile-header">
-        <div className="logo" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div className="logo" style={{ display: 'flex', alignItems: 'center' }}>
           <img
-            src="/logo.svg"
-            alt="FinFlow Logo"
-            style={{ width: '34px', height: '34px', filter: 'drop-shadow(0px 2px 6px rgba(0, 245, 212, 0.35))' }}
+            src="/assets/logo/finflow-logo.svg"
+            alt="FinFlow"
+            style={{ height: '28px', width: 'auto' }}
           />
-          <span style={{ fontSize: '1.35rem', fontWeight: 800 }}>
-            Fin<span style={{ color: '#00F5D4' }}>Flow</span>
-          </span>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           <button className="hamburger-btn" onClick={onOpenUpload} title="Upload Statement">

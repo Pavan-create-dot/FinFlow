@@ -42,15 +42,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Sidebar */}
       <aside className={`sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
-        <div className="logo" style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+        <div className="logo" style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center' }}>
           <img
-            src="/logo.svg"
-            alt="FinFlow Logo"
-            style={{ width: '44px', height: '44px', filter: 'drop-shadow(0px 2px 8px rgba(0, 245, 212, 0.35))' }}
+            src="/assets/logo/finflow-logo.svg"
+            alt="FinFlow"
+            style={{ height: '32px', width: 'auto' }}
           />
-          <span style={{ fontSize: '1.75rem', fontWeight: 800, letterSpacing: '-0.03em', fontFamily: "'Outfit', sans-serif" }}>
-            Fin<span style={{ color: '#00F5D4' }}>Flow</span>
-          </span>
         </div>
 
         <nav className="nav-menu">
@@ -106,14 +103,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </nav>
 
         <div className="sidebar-footer">
-          <div style={{ padding: '0 0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+          <div style={{ padding: '0 0.5rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
             Logged in as:<br />
-            <span style={{ color: 'white', fontWeight: 600, wordBreak: 'break-all' }}>
+            <span style={{ color: 'var(--text-primary)', fontWeight: 600, wordBreak: 'break-all' }}>
               {userEmail || 'User'}
             </span>
           </div>
-          <button onClick={logout} className="btn-secondary" style={{ width: '100%', padding: '0.65rem' }}>
-            <LogOut size={16} /> Logout
+          <button onClick={logout} className="btn-secondary" style={{ width: '100%', padding: '0.575rem' }}>
+            <LogOut size={15} /> Logout
           </button>
         </div>
       </aside>

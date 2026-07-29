@@ -39,11 +39,15 @@ export const Auth: React.FC = () => {
     <div className="auth-container">
       <div className="glass-card auth-card">
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1.5rem', gap: '0.5rem' }}>
-          <img src="/logo.svg" alt="FinFlow Logo" style={{ width: '64px', height: '64px', filter: 'drop-shadow(0px 2px 10px rgba(0, 245, 212, 0.4))' }} />
-          <div style={{ fontSize: '2rem', fontWeight: 800, fontFamily: "'Outfit', sans-serif" }}>
-            Fin<span style={{ color: '#00F5D4' }}>Flow</span>
+          <img
+            src="/assets/logo/finflow-icon.svg"
+            alt="FinFlow Logo"
+            style={{ width: '56px', height: '56px' }}
+          />
+          <div style={{ fontSize: '1.625rem', fontWeight: 700, fontFamily: "'Inter', sans-serif", letterSpacing: '-0.04em', color: 'var(--text-primary)' }}>
+            Fin<span style={{ color: 'var(--accent-primary)' }}>Flow</span>
           </div>
-          <div style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.12em', color: '#00F5D4', textTransform: 'uppercase' }}>
+          <div style={{ fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.12em', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
             PLAN. TRACK. GROW.
           </div>
         </div>
@@ -129,7 +133,7 @@ export const Auth: React.FC = () => {
         <p style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
           {isLogin ? "Don't have an account?" : "Already have an account?"}
           <span 
-            style={{ color: 'var(--accent-primary)', cursor: 'pointer', marginLeft: '0.5rem', fontWeight: 'bold' }}
+            style={{ color: 'var(--accent-primary)', cursor: 'pointer', marginLeft: '0.5rem', fontWeight: 600 }}
             onClick={() => setIsLogin(!isLogin)}
           >
             {isLogin ? 'Sign Up' : 'Log In'}
