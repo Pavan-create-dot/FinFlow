@@ -78,6 +78,7 @@ export const CategoryBreakdown = ({ data }: { data: CategorySummary[] }) => (
         <Tooltip 
           cursor={{ fill: 'transparent' }}
           contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
+          formatter={(value: any) => [formatCurrency(Number(value)), 'Spent']}
         />
         <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={20}>
           {data.map((entry, index) => (
