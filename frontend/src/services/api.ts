@@ -108,7 +108,7 @@ export const api = {
   goals: {
     list: () => fetcher.get('/goals'),
     create: (data: { name: string; targetAmount: number; deadline?: string | null }) => fetcher.post('/goals', data),
-    updateProgress: (id: string, currentAmount: number) => fetcher.patch(`/goals/${id}/progress`, { currentAmount }),
+    updateProgress: (id: string, currentAmount: number) => fetcher.patch(`/goals/${id}`, { currentAmount }),
     delete: (id: string) => fetcher.delete(`/goals/${id}`),
   }
 };
