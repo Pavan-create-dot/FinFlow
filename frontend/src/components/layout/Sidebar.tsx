@@ -42,12 +42,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Sidebar */}
       <aside className={`sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
-        <div className="logo" style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center' }}>
-          <img
-            src="/assets/logo/finflow-logo.svg"
-            alt="FinFlow"
-            style={{ height: '32px', width: 'auto' }}
-          />
+        <div className="logo" style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <img src="/assets/logo/finflow-icon.svg" alt="FinFlow" style={{ width: '30px', height: '30px' }} />
+          <span style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.5rem', background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', letterSpacing: '-0.5px' }}>FinFlow</span>
         </div>
 
         <nav className="nav-menu">

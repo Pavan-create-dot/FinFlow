@@ -34,7 +34,7 @@ export class GoalService {
     }));
   }
 
-  static async updateGoalProgress(userId: string, id: string, currentAmount: number) {
+  static async updateGoalProgress(userId: string, id: string, currentAmount: number, mode: 'add' | 'set' = 'add') {
     const existing = await prisma.savingsGoal.findFirst({
       where: { id, userId }
     });
@@ -43,9 +43,16 @@ export class GoalService {
       throw new Error('Goal not found');
     }
 
+    const inputPaise = BigInt(Math.round(Number(currentAmount) * 100));
+    const rawAmount = mode === 'set' 
+      ? inputPaise 
+      : existing.currentAmount + inputPaise;
+    // Clamp to target so currentAmount never exceeds targetAmount in the DB
+    const newCurrentAmount = rawAmount > existing.targetAmount ? existing.targetAmount : rawAmount;
+
     const updated = await prisma.savingsGoal.update({
       where: { id },
-      data: { currentAmount: BigInt(Math.round(Number(currentAmount) * 100)) }
+      data: { currentAmount: newCurrentAmount }
     });
 
     return {

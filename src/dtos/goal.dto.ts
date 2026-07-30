@@ -9,6 +9,7 @@ export const createGoalSchema = z.object({
 
 export const updateGoalProgressSchema = z.object({
   currentAmount: z.number().min(0, 'Current amount must be positive or zero'),
+  mode: z.enum(['add', 'set']).optional(),
 });
 
 export type CreateGoalDto = z.infer<typeof createGoalSchema>;

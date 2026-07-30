@@ -53,11 +53,12 @@ export const SavingsGoals = () => {
 
   const handleUpdateProgress = async (id: string) => {
     const parsed = parseFloat(currentAmountInput);
-    if (isNaN(parsed) || parsed < 0) return;
+    if (isNaN(parsed) || parsed <= 0) return;
     try {
-      const res = await api.goals.updateProgress(id, parsed);
+      const res = await api.goals.updateProgress(id, parsed, 'add');
       setGoals(goals.map(g => g.id === id ? res.data : g));
       setEditingGoalId(null);
+      setCurrentAmountInput('');
     } catch (err) {
       console.error('Failed to update progress', err);
     }
@@ -70,6 +71,13 @@ export const SavingsGoals = () => {
     } catch (err) {
       console.error('Failed to delete goal', err);
     }
+  };
+
+  const formatDate = (dateStr?: string | null) => {
+    if (!dateStr) return null;
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return null;
+    return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
   };
 
   if (loading) {
@@ -103,7 +111,7 @@ export const SavingsGoals = () => {
             </div>
             <div className="form-group">
               <label>Target Amount (₹)</label>
-              <input type="number" className="form-input" value={targetAmount} onChange={e => setTargetAmount(e.target.value)} required />
+              <input type="number" className="form-input" value={targetAmount} onChange={e => setTargetAmount(e.target.value)} required min="0.01" step="0.01" />
             </div>
             <div className="form-group">
               <label>Deadline (Optional)</label>
@@ -125,14 +133,15 @@ export const SavingsGoals = () => {
         <div style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))' }}>
           {goals.map(goal => {
             const percent = goal.targetAmount > 0 ? Math.min((goal.currentAmount / goal.targetAmount) * 100, 100) : 0;
+            const formattedDeadline = formatDate(goal.deadline);
             return (
               <div key={goal.id} className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
                     <h4 style={{ fontWeight: 700, fontSize: '1.1rem' }}>{goal.name}</h4>
-                    {goal.deadline && (
+                    {formattedDeadline && (
                       <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                        Target: {new Date(goal.deadline).toLocaleDateString('en-IN')}
+                        Target: {formattedDeadline}
                       </span>
                     )}
                   </div>
@@ -146,30 +155,35 @@ export const SavingsGoals = () => {
                     <span style={{ color: 'var(--text-secondary)' }}>
                       ₹{(goal.currentAmount / 100).toLocaleString('en-IN')} / ₹{(goal.targetAmount / 100).toLocaleString('en-IN')}
                     </span>
-                    <span style={{ fontWeight: 700, color: 'var(--success)' }}>{percent.toFixed(1)}%</span>
+                    {percent >= 100 ? (
+                      <span style={{ fontWeight: 700, color: '#f59e0b', background: 'rgba(245, 158, 11, 0.12)', padding: '0.1rem 0.6rem', borderRadius: '1rem', fontSize: '0.8rem' }}>✓ Completed!</span>
+                    ) : (
+                      <span style={{ fontWeight: 700, color: 'var(--success)' }}>{percent.toFixed(1)}%</span>
+                    )}
                   </div>
                   <div className="budget-progress-container" style={{ height: '10px' }}>
-                    <div className="budget-progress-bar" style={{ width: `${percent}%`, backgroundColor: 'var(--success)', boxShadow: '0 0 10px rgba(16, 185, 129, 0.5)' }} />
+                    <div className="budget-progress-bar" style={{ width: `${percent}%`, backgroundColor: percent >= 100 ? '#f59e0b' : 'var(--success)', boxShadow: percent >= 100 ? '0 0 10px rgba(245, 158, 11, 0.5)' : '0 0 10px rgba(16, 185, 129, 0.5)' }} />
                   </div>
                 </div>
 
                 {editingGoalId === goal.id ? (
-                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
                     <input 
                       type="number" 
                       className="form-input" 
-                      style={{ padding: '0.4rem' }} 
+                      style={{ flex: 1, padding: '0.45rem 0.75rem', fontSize: '0.875rem' }} 
                       value={currentAmountInput} 
                       onChange={e => setCurrentAmountInput(e.target.value)} 
-                      placeholder="Amount saved so far (₹)"
+                      placeholder="Amount to add (₹)"
                       min="0"
                       step="0.01"
+                      autoFocus
                     />
-                    <button className="btn-primary" style={{ padding: '0.4rem 1rem' }} onClick={() => handleUpdateProgress(goal.id)}>Save</button>
-                    <button className="btn-secondary" style={{ padding: '0.4rem 1rem' }} onClick={() => setEditingGoalId(null)}>Cancel</button>
+                    <button className="btn-primary" style={{ padding: '0.45rem 1rem', fontSize: '0.875rem', whiteSpace: 'nowrap' }} onClick={() => handleUpdateProgress(goal.id)}>Save</button>
+                    <button className="btn-secondary" style={{ padding: '0.45rem 1rem', fontSize: '0.875rem', whiteSpace: 'nowrap' }} onClick={() => setEditingGoalId(null)}>Cancel</button>
                   </div>
                 ) : (
-                  <button className="btn-secondary" style={{ padding: '0.4rem 1rem', width: 'fit-content', marginTop: '0.5rem' }} onClick={() => { setEditingGoalId(goal.id); setCurrentAmountInput(String(goal.currentAmount / 100)); }}>
+                  <button className="btn-secondary" style={{ padding: '0.4rem 1rem', width: 'fit-content', marginTop: '0.5rem' }} onClick={() => { setEditingGoalId(goal.id); setCurrentAmountInput(''); }}>
                     <Edit2 size={14} /> Update Progress
                   </button>
                 )}

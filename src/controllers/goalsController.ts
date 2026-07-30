@@ -25,7 +25,8 @@ export const getGoals = async (req: AuthRequest, res: Response) => {
 
 export const updateGoalProgress = async (req: AuthRequest, res: Response) => {
   try {
-    const updated = await GoalService.updateGoalProgress(req.user!.id, req.params.id, req.body.currentAmount);
+    const { currentAmount, mode } = req.body;
+    const updated = await GoalService.updateGoalProgress(req.user!.id, req.params.id, currentAmount, mode);
     return res.json(updated);
   } catch (error: any) {
     logger.error(error, 'Update Goal Progress Error');

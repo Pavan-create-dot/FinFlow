@@ -27,7 +27,7 @@ export const AIInsights: React.FC = () => {
   ]);
 
   const fetchInsights = async (force = false) => {
-    if (!force && hasFetched.current && insights) return;
+    if (!force && hasFetched.current) return;
     
     setInsightsLoading(true);
     try {
@@ -60,10 +60,10 @@ export const AIInsights: React.FC = () => {
 
     try {
       // Build history context (omit first bot greeting message)
-      const chatHistory = messages.slice(1).map(m => ({
-        role: m.role,
-        content: m.content
-      }));
+      const chatHistory = [...messages, userMsg].slice(1).map(m => ({
+          role: m.role,
+          content: m.content
+        }));
 
       const res = await api.ai.chat(textToSend, chatHistory);
       const botMsg: Message = { role: 'assistant', content: res.data.reply };
@@ -170,7 +170,7 @@ export const AIInsights: React.FC = () => {
           flexDirection: 'column', 
           gap: '1rem', 
           padding: '0.75rem', 
-          background: 'rgba(0,0,0,0.15)',
+          background: 'var(--bg-secondary)',
           borderRadius: '0.75rem',
           border: '1px solid var(--glass-border)',
           marginBottom: '1rem'
@@ -198,7 +198,7 @@ export const AIInsights: React.FC = () => {
               </div>
               <div 
                 style={{ 
-                  background: m.role === 'user' ? 'rgba(99, 102, 241, 0.18)' : 'rgba(255, 255, 255, 0.03)',
+                  background: m.role === 'user' ? 'rgba(99, 102, 241, 0.18)' : 'var(--glass-bg)',
                   border: m.role === 'user' ? '1px solid rgba(99, 102, 241, 0.3)' : '1px solid var(--glass-border)',
                   color: 'var(--text-primary)',
                   padding: '0.75rem 1rem',
@@ -216,7 +216,7 @@ export const AIInsights: React.FC = () => {
           {chatLoading && (
             <div style={{ alignSelf: 'flex-start', maxWidth: '85%' }}>
               <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginBottom: '0.2rem', fontWeight: 700 }}>FinAI</div>
-              <div style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', padding: '0.75rem 1rem', borderRadius: '14px 14px 14px 2px', display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
+              <div style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', padding: '0.75rem 1rem', borderRadius: '14px 14px 14px 2px', display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
                 <span className="skeleton-line" style={{ width: '8px', height: '8px', borderRadius: '50%', margin: 0, animationDelay: '0s' }}></span>
                 <span className="skeleton-line" style={{ width: '8px', height: '8px', borderRadius: '50%', margin: 0, animationDelay: '0.2s' }}></span>
                 <span className="skeleton-line" style={{ width: '8px', height: '8px', borderRadius: '50%', margin: 0, animationDelay: '0.4s' }}></span>
@@ -239,8 +239,8 @@ export const AIInsights: React.FC = () => {
                 padding: '0.4rem 0.8rem', 
                 fontSize: '0.75rem', 
                 borderRadius: '2rem',
-                border: '1px solid rgba(255,255,255,0.05)',
-                background: 'rgba(255,255,255,0.02)'
+                border: '1px solid var(--glass-border)',
+                background: 'var(--glass-bg)'
               }}
             >
               {pill}
