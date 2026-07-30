@@ -42,7 +42,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Sidebar */}
       <aside className={`sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
-        <div className="logo" style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center' }}>
+        <div className="logo" style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="logoGradSidebar" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="#2563EB" />
+                <stop offset="100%" stopColor="#14B8A6" />
+              </linearGradient>
+            </defs>
+            <rect width="30" height="30" rx="8" fill="url(#logoGradSidebar)" />
+            <path d="M9 8h12v3H12v3h8v3h-8v6H9V8z" fill="white" />
+          </svg>
           <span style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.5rem', background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', letterSpacing: '-0.5px' }}>FinFlow</span>
         </div>
 
