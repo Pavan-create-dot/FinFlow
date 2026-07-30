@@ -23,16 +23,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* Mobile Header */}
       <header className="mobile-header">
         <div className="logo" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-          <svg width="24" height="24" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="logoGradNav" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor="#2563EB" />
-                <stop offset="100%" stopColor="#14B8A6" />
-              </linearGradient>
-            </defs>
-            <rect width="30" height="30" rx="8" fill="url(#logoGradNav)" />
-            <path d="M9 8h12v3H12v3h8v3h-8v6H9V8z" fill="white" />
-          </svg>
+          <img src="/assets/logo/finflow-icon.svg" alt="FinFlow" style={{ width: '24px', height: '24px' }} />
           <span style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.3rem', background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', letterSpacing: '-0.5px' }}>FinFlow</span>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
