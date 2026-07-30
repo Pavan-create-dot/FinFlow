@@ -40,6 +40,9 @@
 
   /* ── Legacy alias (keeps old component refs working) */
   --brand-fin-color: #2563EB;
+  /* ── Utility ────────────────────────────────────── */
+  --bg-secondary: #F1F5F9;
+  --glass-bg:     #FFFFFF;
 }
 
 /* ── Reset ─────────────────────────────────────────── */

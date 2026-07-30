@@ -44,7 +44,7 @@ export const SubscriptionsPage: React.FC<SubscriptionsPageProps> = ({
 
         <div className="glass-card stat-card" style={{ minHeight: '140px' }}>
           <div>
-            <div className="stat-icon" style={{ color: 'var(--accent-secondary)', background: 'rgba(168, 85, 247, 0.08)' }}>
+            <div className="stat-icon" style={{ color: 'var(--accent-pink)', background: 'rgba(168, 85, 247, 0.08)' }}>
               <Calendar size={22} />
             </div>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', fontWeight: 600 }}>Monthly Spend Est.</p>

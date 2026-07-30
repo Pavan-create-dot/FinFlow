@@ -44,9 +44,11 @@ export class GoalService {
     }
 
     const inputPaise = BigInt(Math.round(Number(currentAmount) * 100));
-    const newCurrentAmount = mode === 'set' 
+    const rawAmount = mode === 'set' 
       ? inputPaise 
       : existing.currentAmount + inputPaise;
+    // Clamp to target so currentAmount never exceeds targetAmount in the DB
+    const newCurrentAmount = rawAmount > existing.targetAmount ? existing.targetAmount : rawAmount;
 
     const updated = await prisma.savingsGoal.update({
       where: { id },

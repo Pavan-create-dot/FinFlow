@@ -40,8 +40,9 @@ export class TransactionService {
           lte: maxAmount ? BigInt(Number(maxAmount) * 100) : undefined,
         }
       },
-      take: search ? undefined : Number(limit),
-      skip: search ? undefined : Number(offset),
+      // When searching, fetch a large page so in-memory filter has enough rows
+      take: search ? 500 : Number(limit),
+      skip: search ? 0 : Number(offset),
       orderBy,
       include: { category: true }
     });
@@ -50,7 +51,7 @@ export class TransactionService {
 
     if (search) {
       const q = (search as string).toLowerCase();
-      decrypted = decrypted.filter(t => 
+      decrypted = decrypted.filter(t =>
         t.description.toLowerCase().includes(q) || 
         (t.merchantName && t.merchantName.toLowerCase().includes(q))
       );
@@ -113,6 +114,9 @@ export class TransactionService {
       else if (savingsRate > 10) finScore += 10;
       else if (savingsRate > 0) finScore += 5;
       else finScore -= 10;
+    } else if (totals.totalSpend > 0) {
+      // Has expenses but no income recorded — significant red flag
+      finScore -= 20;
     }
 
     if (budgets.length > 0) {

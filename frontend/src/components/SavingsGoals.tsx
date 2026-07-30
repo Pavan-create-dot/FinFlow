@@ -155,10 +155,14 @@ export const SavingsGoals = () => {
                     <span style={{ color: 'var(--text-secondary)' }}>
                       ₹{(goal.currentAmount / 100).toLocaleString('en-IN')} / ₹{(goal.targetAmount / 100).toLocaleString('en-IN')}
                     </span>
-                    <span style={{ fontWeight: 700, color: 'var(--success)' }}>{percent.toFixed(1)}%</span>
+                    {percent >= 100 ? (
+                      <span style={{ fontWeight: 700, color: '#f59e0b', background: 'rgba(245, 158, 11, 0.12)', padding: '0.1rem 0.6rem', borderRadius: '1rem', fontSize: '0.8rem' }}>✓ Completed!</span>
+                    ) : (
+                      <span style={{ fontWeight: 700, color: 'var(--success)' }}>{percent.toFixed(1)}%</span>
+                    )}
                   </div>
                   <div className="budget-progress-container" style={{ height: '10px' }}>
-                    <div className="budget-progress-bar" style={{ width: `${percent}%`, backgroundColor: 'var(--success)', boxShadow: '0 0 10px rgba(16, 185, 129, 0.5)' }} />
+                    <div className="budget-progress-bar" style={{ width: `${percent}%`, backgroundColor: percent >= 100 ? '#f59e0b' : 'var(--success)', boxShadow: percent >= 100 ? '0 0 10px rgba(245, 158, 11, 0.5)' : '0 0 10px rgba(16, 185, 129, 0.5)' }} />
                   </div>
                 </div>
 
