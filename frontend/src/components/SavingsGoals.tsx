@@ -13,7 +13,6 @@ export const SavingsGoals = () => {
 
   // Update progress state
   const [editingGoalId, setEditingGoalId] = useState<string | null>(null);
-  const [updateMode, setUpdateMode] = useState<'add' | 'set'>('add');
   const [currentAmountInput, setCurrentAmountInput] = useState('');
 
   useEffect(() => {
@@ -54,9 +53,9 @@ export const SavingsGoals = () => {
 
   const handleUpdateProgress = async (id: string) => {
     const parsed = parseFloat(currentAmountInput);
-    if (isNaN(parsed) || parsed < 0) return;
+    if (isNaN(parsed) || parsed <= 0) return;
     try {
-      const res = await api.goals.updateProgress(id, parsed, updateMode);
+      const res = await api.goals.updateProgress(id, parsed, 'add');
       setGoals(goals.map(g => g.id === id ? res.data : g));
       setEditingGoalId(null);
       setCurrentAmountInput('');
@@ -164,57 +163,23 @@ export const SavingsGoals = () => {
                 </div>
 
                 {editingGoalId === goal.id ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.5rem', background: '#F8FAFC', padding: '0.875rem', borderRadius: '0.5rem', border: '1px solid var(--glass-border)' }}>
-                    <div style={{ display: 'flex', gap: '1rem', fontSize: '0.8rem', fontWeight: 600 }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}>
-                        <input 
-                          type="radio" 
-                          name={`mode-${goal.id}`} 
-                          value="add" 
-                          checked={updateMode === 'add'} 
-                          onChange={() => { setUpdateMode('add'); setCurrentAmountInput(''); }} 
-                        />
-                        Add to Progress (+₹)
-                      </label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}>
-                        <input 
-                          type="radio" 
-                          name={`mode-${goal.id}`} 
-                          value="set" 
-                          checked={updateMode === 'set'} 
-                          onChange={() => { setUpdateMode('set'); setCurrentAmountInput(String(goal.currentAmount / 100)); }} 
-                        />
-                        Set Total Saved (₹)
-                      </label>
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <input 
-                        type="number" 
-                        className="form-input" 
-                        style={{ padding: '0.4rem 0.6rem', fontSize: '0.85rem' }} 
-                        value={currentAmountInput} 
-                        onChange={e => setCurrentAmountInput(e.target.value)} 
-                        placeholder={updateMode === 'add' ? "Amount to add (e.g. 500)" : "Total saved (e.g. 1500)"}
-                        min="0"
-                        step="0.01"
-                      />
-                      <button className="btn-primary" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }} onClick={() => handleUpdateProgress(goal.id)}>Save</button>
-                      <button className="btn-secondary" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }} onClick={() => setEditingGoalId(null)}>Cancel</button>
-                    </div>
-
-                    {currentAmountInput && !isNaN(parseFloat(currentAmountInput)) && (
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                        {updateMode === 'add' ? (
-                          <span>New Total Saved: <strong>₹{((goal.currentAmount / 100) + parseFloat(currentAmountInput)).toLocaleString('en-IN')}</strong></span>
-                        ) : (
-                          <span>New Total Saved: <strong>₹{parseFloat(currentAmountInput).toLocaleString('en-IN')}</strong></span>
-                        )}
-                      </div>
-                    )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
+                    <input 
+                      type="number" 
+                      className="form-input" 
+                      style={{ flex: 1, padding: '0.45rem 0.75rem', fontSize: '0.875rem' }} 
+                      value={currentAmountInput} 
+                      onChange={e => setCurrentAmountInput(e.target.value)} 
+                      placeholder="Amount to add (₹)"
+                      min="0"
+                      step="0.01"
+                      autoFocus
+                    />
+                    <button className="btn-primary" style={{ padding: '0.45rem 1rem', fontSize: '0.875rem', whiteSpace: 'nowrap' }} onClick={() => handleUpdateProgress(goal.id)}>Save</button>
+                    <button className="btn-secondary" style={{ padding: '0.45rem 1rem', fontSize: '0.875rem', whiteSpace: 'nowrap' }} onClick={() => setEditingGoalId(null)}>Cancel</button>
                   </div>
                 ) : (
-                  <button className="btn-secondary" style={{ padding: '0.4rem 1rem', width: 'fit-content', marginTop: '0.5rem' }} onClick={() => { setEditingGoalId(goal.id); setUpdateMode('add'); setCurrentAmountInput(''); }}>
+                  <button className="btn-secondary" style={{ padding: '0.4rem 1rem', width: 'fit-content', marginTop: '0.5rem' }} onClick={() => { setEditingGoalId(goal.id); setCurrentAmountInput(''); }}>
                     <Edit2 size={14} /> Update Progress
                   </button>
                 )}
