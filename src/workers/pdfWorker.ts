@@ -5,8 +5,14 @@ import pdf from 'pdf-parse';
 import fs from 'fs';
 import { AIService } from '../services/aiService';
 import { encrypt } from '../utils/encryption';
-import { prisma } from '../lib/prisma';
+import { Statement } from '../models/Statement';
+import { Category } from '../models/Category';
+import { Transaction } from '../models/Transaction';
+import { connectDB, disconnectDB } from '../lib/db';
 import { logger } from '../utils/logger';
+
+// Ensure DB is connected in worker process
+connectDB();
 
 interface PDFJobData {
   statementId: string;
@@ -20,10 +26,7 @@ export const pdfWorker = new Worker(
     const { statementId, userId, filePath } = job.data;
 
     try {
-      await prisma.statement.update({
-        where: { id: statementId },
-        data: { status: 'PROCESSING' },
-      });
+      await Statement.findByIdAndUpdate(statementId, { status: 'PROCESSING' });
 
       // 1. Extract raw text from PDF
       const dataBuffer = fs.readFileSync(filePath);
@@ -34,36 +37,33 @@ export const pdfWorker = new Worker(
       const transactions = await AIService.extractTransactions(rawText);
 
       // Fetch all system categories to map them
-      const categories = await prisma.category.findMany();
-      const categoryMap = new Map(categories.map(c => [c.name.toLowerCase(), c.id]));
+      const categories = await Category.find();
+      const categoryMap = new Map(categories.map(c => [c.name.toLowerCase(), c._id]));
 
-      // 3. Batch insert using a transaction to ensure atomicity
-      await prisma.$transaction(async (tx) => {
-        for (const t of transactions) {
-          const extractedCat = t.category?.toLowerCase() || '';
-          const categoryId = categoryMap.get(extractedCat) || null;
+      // 3. Batch insert using Transaction.insertMany
+      const docsToInsert = transactions.map(t => {
+        const extractedCat = t.category?.toLowerCase() || '';
+        const categoryId = categoryMap.get(extractedCat) || null;
 
-          await tx.transaction.create({
-            data: {
-              userId,
-              statementId,
-              date: new Date(t.date),
-              amount: BigInt(t.amount),
-              description: encrypt(t.description) as string,
-              merchantName: t.merchantName ? (encrypt(t.merchantName) as string) : null,
-              type: t.type,
-              originalText: encrypt(t.description) as string,
-              isSubscription: t.isSubscription || false,
-              categoryId: categoryId,
-            },
-          });
-        }
+        return {
+          userId,
+          statementId,
+          date: new Date(t.date),
+          amount: Number(t.amount),
+          description: encrypt(t.description) as string,
+          merchantName: t.merchantName ? (encrypt(t.merchantName) as string) : null,
+          type: t.type,
+          originalText: encrypt(t.description) as string,
+          isSubscription: t.isSubscription || false,
+          categoryId: categoryId,
+        };
       });
 
-      await prisma.statement.update({
-        where: { id: statementId },
-        data: { status: 'COMPLETED' },
-      });
+      if (docsToInsert.length > 0) {
+        await Transaction.insertMany(docsToInsert);
+      }
+
+      await Statement.findByIdAndUpdate(statementId, { status: 'COMPLETED' });
 
       // Cleanup: Delete the local file after processing
       if (fs.existsSync(filePath)) {
@@ -73,18 +73,12 @@ export const pdfWorker = new Worker(
     } catch (error: any) {
       logger.error(error, `Worker failed at job ${job.id}`);
       try {
-        await prisma.statement.update({
-          where: { id: statementId },
-          data: { 
-            status: 'FAILED',
-            errorMessage: encrypt(error.message) as string 
-          },
+        await Statement.findByIdAndUpdate(statementId, {
+          status: 'FAILED',
+          errorMessage: encrypt(error.message) as string,
         });
       } catch (dbErr) {
         logger.error(dbErr, `Could not set statement status to FAILED`);
-      }
-      if (error.code === 'P2025') {
-        return;
       }
       throw error;
     }
@@ -105,8 +99,8 @@ logger.info('PDF Processing Worker active and listening to Redis queue...');
 const shutdown = async (signal: string) => {
   logger.info(`Received ${signal}. Shutting down worker...`);
   await pdfWorker.close();
-  await prisma.$disconnect();
-  logger.info('Worker disconnected from Redis and Prisma.');
+  await disconnectDB();
+  logger.info('Worker disconnected from Redis and MongoDB.');
   process.exit(0);
 };
 

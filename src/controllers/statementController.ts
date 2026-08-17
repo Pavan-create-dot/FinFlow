@@ -1,6 +1,5 @@
 import { Response } from 'express';
 import { StatementService } from '../services/statementService';
-import { serializePrisma } from '../utils/serializer';
 import { logger } from '../utils/logger';
 import { AuthRequest } from '../middlewares/auth';
 
@@ -31,7 +30,7 @@ export const uploadStatement = async (req: AuthRequest, res: Response) => {
 export const getStatements = async (req: AuthRequest, res: Response) => {
   try {
     const data = await StatementService.getStatements(req.user!.id);
-    return res.json(serializePrisma(data));
+    return res.json(data);
   } catch (error) {
     logger.error(error, 'Fetch Statements Error');
     return res.status(500).json({ error: 'Failed to fetch statements' });

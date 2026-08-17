@@ -1,6 +1,6 @@
 # FinFlow — AI Financial Intelligence & Statement Parser
 
-FinFlow is an AI-powered financial intelligence web application built on the MERN stack (utilizing PostgreSQL + Prisma for strict relational transactional integrity). It automates transaction logging by parsing bank statements using Google Gemini AI, processing files asynchronously via BullMQ and Redis, and securing private transaction logs with application-level AES-256-GCM encryption.
+FinFlow is an AI-powered financial intelligence web application built on the MERN stack (utilizing MongoDB + Mongoose for flexible, high-performance document data storage). It automates transaction logging by parsing bank statements using Google Gemini AI, processing files asynchronously via BullMQ and Redis, and securing private transaction logs with application-level AES-256-GCM encryption.
 
 ---
 
@@ -17,8 +17,8 @@ FinFlow is an AI-powered financial intelligence web application built on the MER
 ## 🛠️ Tech Stack
 - **Frontend**: React 18, TypeScript, Vite, Recharts, Lucide React, Vanilla CSS variables
 - **Backend API**: Node.js, Express, TypeScript, Zod validations, Helmet security
-- **ORM & Database**: Prisma Client, PostgreSQL
-- **Asynchronous Task Queue**: BullMQ, Redis, child_process spawns
+- **ODM & Database**: Mongoose ODM, MongoDB (MongoDB Atlas Cloud Database)
+- **Asynchronous Task Queue**: BullMQ, Redis
 - **Artificial Intelligence**: Google Gemini API (`gemini-2.0-flash`, `gemini-2.5-flash`)
 - **Testing**: Jest, Supertest
 
@@ -39,10 +39,10 @@ FinFlow is an AI-powered financial intelligence web application built on the MER
                       │  - Thin Controller / Fat Service Pattern     │
                       └──────────────┬────────────────┬──────────────┘
                                      │                │
-                            Prisma   │                │ BullMQ / Redis
-                            ORM      ▼                ▼
+                           Mongoose  │                │ BullMQ / Redis
+                           ODM       ▼                ▼
                       ┌──────────────┐       ┌───────────────────────┐
-                      │ PostgreSQL   │       │ PDF Statement Worker  │
+                      │ MongoDB Atlas│       │ PDF Statement Worker  │
                       └──────────────┘       └───────────────────────┘
 ```
 
@@ -50,23 +50,17 @@ FinFlow is an AI-powered financial intelligence web application built on the MER
 
 ## ⚙️ Development Setup
 
-Follow these steps to run the application locally:
+Follow these simple steps to run the application locally:
 
 ### Prerequisites
 - Node.js (v18+)
-- Docker (for running PostgreSQL and Redis services)
+- MongoDB Atlas account (free cloud cluster)
 
-### 1. Configure Services via Docker
-Start the Redis and PostgreSQL instances:
-```bash
-docker-compose up -d
-```
-
-### 2. Environment Variables Configuration
+### 1. Environment Variables Configuration
 Create a `.env` file in the root directory:
 ```env
 PORT=3000
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/finflow?schema=public"
+DATABASE_URL="mongodb+srv://<username>:<password>@cluster.mongodb.net/finflow?retryWrites=true&w=majority"
 REDIS_HOST="localhost"
 REDIS_PORT=6379
 GEMINI_API_KEY="your-google-gemini-api-key"
@@ -77,53 +71,31 @@ FRONTEND_URL="http://localhost:5173"
 NODE_ENV="development"
 ```
 
-### 3. Database Initialization
-Install dependencies, generate Prisma client, and push database tables:
+### 2. Database Seeding
+Install dependencies and seed default system categories into MongoDB:
 ```bash
 npm install
-npx prisma generate
-npx prisma db push
-npx prisma db seed
+npm run seed
 ```
 
-### 4. Run the Project
+### 3. Run the Backend API & Worker
 Start the API server and BullMQ background worker concurrently:
 ```bash
 npm run dev
 ```
 
+### 4. Run the Frontend
 In a separate terminal, navigate to the frontend directory, install dependencies, and start Vite:
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-Open `http://localhost:5173` to view the application.
 
 ---
 
 ## 🧪 Testing & Verification
-You can run checks using the predefined project scripts:
-- **Lint**: Run ESLint checks:
-  ```bash
-  npm run lint
-  ```
-- **Test**: Run the Jest integration test suite:
-  ```bash
-  npm test
-  ```
-- **Build**: Compile TypeScript files:
-  ```bash
-  npm run build
-  ```
-- **Seed**: Seed database with mock category limits:
-  ```bash
-  npm run seed
-  ```
-
----
-
-## 🔮 Future Enhancements
-1. **OAuth2 authentication**: Integrate Google and GitHub login wrappers.
-2. **Third-party banking integrations**: Implement Plaid/Yodlee account linking.
-3. **Advanced visual projections**: Add historical predictive spending trends.
+Execute the automated test suite using Jest:
+```bash
+npm test
+```

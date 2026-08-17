@@ -1,7 +1,8 @@
 import { GoogleGenerativeAI, GenerationConfig } from '@google/generative-ai';
 import { TRANSACTION_EXTRACTION_PROMPT, FINANCIAL_INSIGHTS_PROMPT, FINANCIAL_CHAT_SYSTEM_PROMPT } from './prompts';
 import { decrypt } from '../utils/encryption';
-import { prisma } from '../lib/prisma';
+import { Transaction } from '../models/Transaction';
+import { Budget } from '../models/Budget';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'dummy-key');
 
@@ -197,59 +198,57 @@ export class AIService {
   // --- Wrapper Services for controllers ---
 
   static async getUserFinancialInsights(userId: string) {
-    const transactions = await prisma.transaction.findMany({
-      where: { userId },
-      orderBy: { date: 'desc' },
-      take: 100,
-      select: {
-        amount: true,
-        description: true,
-        date: true,
-        type: true,
-        merchantName: true,
-      }
-    });
+    const transactions = await Transaction.find({ userId })
+      .sort({ date: -1 })
+      .limit(100)
+      .select('amount description date type merchantName');
 
     if (transactions.length === 0) {
       return { message: "Upload some statements first to get AI insights!" };
     }
 
-    const serializedData = transactions.map(t => ({
-      ...t,
-      description: decrypt(t.description) || '',
-      merchantName: t.merchantName ? decrypt(t.merchantName) || null : null,
-      amount: Number(t.amount) / 100
-    }));
+    const serializedData = transactions.map(t => {
+      const json = t.toJSON();
+      return {
+        ...json,
+        description: decrypt(json.description) || '',
+        merchantName: json.merchantName ? decrypt(json.merchantName) || null : null,
+        amount: Number(json.amount) / 100
+      };
+    });
 
     return this.generateInsights(serializedData);
   }
 
   static async handleUserChat(userId: string, message: string, history: any[]) {
-    const transactions = await prisma.transaction.findMany({
-      where: { userId },
-      orderBy: { date: 'desc' },
-      take: 80,
-      include: { category: true }
+    const transactions = await Transaction.find({ userId })
+      .sort({ date: -1 })
+      .limit(80)
+      .populate('categoryId');
+
+    const budgets = await Budget.find({ userId }).populate('categoryId');
+
+    const decryptedTxs = transactions.map(t => {
+      const json = t.toJSON();
+      const catName = json.category ? json.category.name : 'Uncategorized';
+      return {
+        amount: Number(json.amount) / 100,
+        description: decrypt(json.description) || '',
+        merchantName: json.merchantName ? decrypt(json.merchantName) : null,
+        type: json.type,
+        date: new Date(json.date).toISOString().split('T')[0],
+        category: catName
+      };
     });
 
-    const budgets = await prisma.budget.findMany({
-      where: { userId },
-      include: { category: true }
+    const budgetsSummary = budgets.map(b => {
+      const json = b.toJSON();
+      const catName = json.category ? json.category.name : 'Uncategorized';
+      return {
+        category: catName,
+        limit: Number(json.amount) / 100
+      };
     });
-
-    const decryptedTxs = transactions.map(t => ({
-      amount: Number(t.amount) / 100,
-      description: decrypt(t.description) || '',
-      merchantName: t.merchantName ? decrypt(t.merchantName) : null,
-      type: t.type,
-      date: t.date.toISOString().split('T')[0],
-      category: t.category?.name || 'Uncategorized'
-    }));
-
-    const budgetsSummary = budgets.map(b => ({
-      category: b.category.name,
-      limit: Number(b.amount) / 100
-    }));
 
     const financialContext = {
       budgets: budgetsSummary,

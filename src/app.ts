@@ -10,7 +10,7 @@ import goalsRoutes from './routes/goalsRoutes';
 import { errorHandler } from './middlewares/errorHandler';
 import { notFoundHandler } from './middlewares/notFound';
 import { logger } from './utils/logger';
-import { prisma } from './lib/prisma';
+import { connectDB, disconnectDB } from './lib/db';
 
 const app = express();
 app.use(helmet());
@@ -62,25 +62,29 @@ const PORT = process.env.PORT || 3000;
 let server: any;
 
 if (process.env.NODE_ENV !== 'test') {
-  server = app.listen(PORT, () => logger.info(`FinFlow Backend Live on ${PORT}`));
+  connectDB().then(() => {
+    server = app.listen(PORT, () => logger.info(`FinFlow Backend Live on ${PORT}`));
+  });
 
   // Graceful Shutdown
   const shutdown = async (signal: string) => {
     logger.info(`Received ${signal}. Shutting down gracefully...`);
     
-    // Close the server to stop accepting new requests
-    server.close(async () => {
-      logger.info('HTTP server closed.');
-      
-      try {
-        await prisma.$disconnect();
-        logger.info('Prisma disconnected.');
-        process.exit(0);
-      } catch (err) {
-        logger.error(err, 'Error during graceful shutdown');
-        process.exit(1);
-      }
-    });
+    if (server) {
+      server.close(async () => {
+        logger.info('HTTP server closed.');
+        try {
+          await disconnectDB();
+          process.exit(0);
+        } catch (err) {
+          logger.error(err, 'Error during graceful shutdown');
+          process.exit(1);
+        }
+      });
+    } else {
+      await disconnectDB();
+      process.exit(0);
+    }
     
     // Force close after 10s
     setTimeout(() => {

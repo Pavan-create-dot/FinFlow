@@ -1,5 +1,6 @@
 import { Queue } from 'bullmq';
-import { prisma } from '../lib/prisma';
+import { Statement } from '../models/Statement';
+import { Transaction } from '../models/Transaction';
 import { encrypt, decrypt } from '../utils/encryption';
 import { logger } from '../utils/logger';
 
@@ -32,14 +33,12 @@ export class StatementService {
     const encryptedFileName = encrypt(file.originalname) as string;
     const encryptedFileUrl = file.path ? encrypt(file.path) : null;
 
-    const statement = await prisma.statement.create({
-      data: {
-        userId,
-        fileName: encryptedFileName,
-        fileUrl: encryptedFileUrl,
-        bankName: bankName || 'Unknown Bank',
-        status: 'PENDING',
-      },
+    const statement = await Statement.create({
+      userId,
+      fileName: encryptedFileName,
+      fileUrl: encryptedFileUrl,
+      bankName: bankName || 'Unknown Bank',
+      status: 'PENDING',
     });
 
     try {
@@ -57,9 +56,9 @@ export class StatementService {
       });
     } catch (redisErr) {
       logger.error(redisErr, 'Redis unavailable - cannot queue PDF processing');
-      await prisma.statement.update({
-        where: { id: statement.id },
-        data: { status: 'FAILED', errorMessage: encrypt('Processing service temporarily unavailable') },
+      await Statement.findByIdAndUpdate(statement.id, {
+        status: 'FAILED',
+        errorMessage: encrypt('Processing service temporarily unavailable'),
       });
       throw new Error('REDIS_UNAVAILABLE', { cause: redisErr });
     }
@@ -68,31 +67,26 @@ export class StatementService {
   }
 
   static async getStatements(userId: string) {
-    const statements = await prisma.statement.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-    });
+    const statements = await Statement.find({ userId }).sort({ createdAt: -1 });
 
-    return statements.map(s => ({
-      ...s,
-      fileName: decrypt(s.fileName) || '',
-      fileUrl: s.fileUrl ? decrypt(s.fileUrl) || null : null,
-      errorMessage: s.errorMessage ? decrypt(s.errorMessage) || null : null,
-    }));
+    return statements.map(s => {
+      const json = s.toJSON();
+      return {
+        ...json,
+        fileName: decrypt(json.fileName) || '',
+        fileUrl: json.fileUrl ? decrypt(json.fileUrl) || null : null,
+        errorMessage: json.errorMessage ? decrypt(json.errorMessage) || null : null,
+      };
+    });
   }
 
   static async deleteStatement(userId: string, id: string) {
-    const statement = await prisma.statement.findUnique({ where: { id } });
-    if (!statement || statement.userId !== userId) {
+    const statement = await Statement.findOne({ _id: id, userId });
+    if (!statement) {
       throw new Error('Statement not found');
     }
 
-    await prisma.transaction.deleteMany({
-      where: { statementId: id }
-    });
-
-    await prisma.statement.delete({
-      where: { id }
-    });
+    await Transaction.deleteMany({ statementId: id });
+    await Statement.deleteOne({ _id: id });
   }
 }

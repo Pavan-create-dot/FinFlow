@@ -1,78 +1,70 @@
-import { prisma } from '../lib/prisma';
+import { SavingsGoal } from '../models/SavingsGoal';
 
 export class GoalService {
   static async createGoal(userId: string, body: any) {
     const { name, targetAmount, currentAmount, deadline } = body;
 
-    const goal = await prisma.savingsGoal.create({
-      data: {
-        userId,
-        name,
-        targetAmount: BigInt(Math.round(Number(targetAmount) * 100)),
-        currentAmount: currentAmount ? BigInt(Math.round(Number(currentAmount) * 100)) : BigInt(0),
-        deadline: deadline ? new Date(deadline) : null,
-      }
+    const goal = await SavingsGoal.create({
+      userId,
+      name,
+      targetAmount: Math.round(Number(targetAmount) * 100),
+      currentAmount: currentAmount ? Math.round(Number(currentAmount) * 100) : 0,
+      deadline: deadline ? new Date(deadline) : null,
     });
 
+    const json = goal.toJSON();
     return {
-      ...goal,
-      targetAmount: Number(goal.targetAmount),
-      currentAmount: Number(goal.currentAmount),
+      ...json,
+      targetAmount: Number(json.targetAmount),
+      currentAmount: Number(json.currentAmount),
     };
   }
 
   static async getGoals(userId: string) {
-    const goals = await prisma.savingsGoal.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' }
-    });
+    const goals = await SavingsGoal.find({ userId }).sort({ createdAt: -1 });
 
-    return goals.map((g: any) => ({
-      ...g,
-      targetAmount: Number(g.targetAmount),
-      currentAmount: Number(g.currentAmount),
-    }));
+    return goals.map((g) => {
+      const json = g.toJSON();
+      return {
+        ...json,
+        targetAmount: Number(json.targetAmount),
+        currentAmount: Number(json.currentAmount),
+      };
+    });
   }
 
   static async updateGoalProgress(userId: string, id: string, currentAmount: number, mode: 'add' | 'set' = 'add') {
-    const existing = await prisma.savingsGoal.findFirst({
-      where: { id, userId }
-    });
+    const existing = await SavingsGoal.findOne({ _id: id, userId });
 
     if (!existing) {
       throw new Error('Goal not found');
     }
 
-    const inputPaise = BigInt(Math.round(Number(currentAmount) * 100));
+    const inputPaise = Math.round(Number(currentAmount) * 100);
     const rawAmount = mode === 'set' 
       ? inputPaise 
       : existing.currentAmount + inputPaise;
-    // Clamp to target so currentAmount never exceeds targetAmount in the DB
+
     const newCurrentAmount = rawAmount > existing.targetAmount ? existing.targetAmount : rawAmount;
 
-    const updated = await prisma.savingsGoal.update({
-      where: { id },
-      data: { currentAmount: newCurrentAmount }
-    });
+    existing.currentAmount = newCurrentAmount;
+    await existing.save();
 
+    const json = existing.toJSON();
     return {
-      ...updated,
-      targetAmount: Number(updated.targetAmount),
-      currentAmount: Number(updated.currentAmount),
+      ...json,
+      targetAmount: Number(json.targetAmount),
+      currentAmount: Number(json.currentAmount),
     };
   }
 
   static async deleteGoal(userId: string, id: string) {
-    const existing = await prisma.savingsGoal.findFirst({
-      where: { id, userId }
-    });
+    const existing = await SavingsGoal.findOne({ _id: id, userId });
 
     if (!existing) {
       throw new Error('Goal not found');
     }
 
-    await prisma.savingsGoal.delete({
-      where: { id }
-    });
+    await SavingsGoal.deleteOne({ _id: id, userId });
   }
 }

@@ -1,13 +1,12 @@
 import { Response } from 'express';
 import { TransactionService } from '../services/transactionService';
-import { serializePrisma } from '../utils/serializer';
 import { logger } from '../utils/logger';
 import { AuthRequest } from '../middlewares/auth';
 
 export const getTransactions = async (req: AuthRequest, res: Response) => {
   try {
     const data = await TransactionService.getTransactions(req.user!.id, req.query);
-    return res.json(serializePrisma(data));
+    return res.json(data);
   } catch (error) {
     logger.error(error, 'Fetch Transactions Error');
     return res.status(500).json({ error: 'Failed to fetch transactions' });
@@ -17,7 +16,7 @@ export const getTransactions = async (req: AuthRequest, res: Response) => {
 export const getAggregates = async (req: AuthRequest, res: Response) => {
   try {
     const data = await TransactionService.getAggregates(req.user!.id);
-    return res.json(serializePrisma(data));
+    return res.json(data);
   } catch (error) {
     logger.error(error, 'Fetch Analytics Summary Error');
     return res.status(500).json({ error: 'Failed to fetch analytics summary' });
@@ -27,7 +26,7 @@ export const getAggregates = async (req: AuthRequest, res: Response) => {
 export const updateTransaction = async (req: AuthRequest, res: Response) => {
   try {
     const data = await TransactionService.updateTransaction(req.user!.id, req.params.id, req.body.categoryId);
-    return res.json(serializePrisma(data));
+    return res.json(data);
   } catch (error: any) {
     logger.error(error, 'Update Transaction Error');
     if (error.message === 'Transaction not found') {
@@ -40,7 +39,7 @@ export const updateTransaction = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const getCategories = async (req: AuthRequest, res: Response) => {
+export const getCategories = async (_req: AuthRequest, res: Response) => {
   try {
     const data = await TransactionService.getCategories();
     return res.json(data);
@@ -53,7 +52,7 @@ export const getCategories = async (req: AuthRequest, res: Response) => {
 export const createTransaction = async (req: AuthRequest, res: Response) => {
   try {
     const data = await TransactionService.createTransaction(req.user!.id, req.body);
-    return res.json(serializePrisma(data));
+    return res.json(data);
   } catch (error) {
     logger.error(error, 'Create Transaction Error');
     return res.status(500).json({ error: 'Failed to create transaction' });
@@ -63,7 +62,7 @@ export const createTransaction = async (req: AuthRequest, res: Response) => {
 export const getBudgets = async (req: AuthRequest, res: Response) => {
   try {
     const data = await TransactionService.getBudgets(req.user!.id);
-    return res.json(serializePrisma(data));
+    return res.json(data);
   } catch (error) {
     logger.error(error, 'Fetch Budgets Error');
     return res.status(500).json({ error: 'Failed to fetch budgets' });
@@ -73,7 +72,7 @@ export const getBudgets = async (req: AuthRequest, res: Response) => {
 export const upsertBudget = async (req: AuthRequest, res: Response) => {
   try {
     const data = await TransactionService.upsertBudget(req.user!.id, req.body.categoryId, req.body.amount);
-    return res.json(serializePrisma(data));
+    return res.json(data);
   } catch (error) {
     logger.error(error, 'Upsert Budget Error');
     return res.status(500).json({ error: 'Failed to save budget' });

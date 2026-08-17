@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 const envSchema = z.object({
-  DATABASE_URL: z.string().url(),
+  DATABASE_URL: z.string().min(1),
   REDIS_HOST: z.string().min(1).optional(),
   REDIS_PORT: z.string().regex(/^\d+$/).optional(),
   REDIS_URL: z.string().optional(),
