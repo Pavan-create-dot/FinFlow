@@ -1,11 +1,11 @@
 name: Backend CI
 
 on:
+  workflow_dispatch:
   push:
     branches: [ main, develop ]
     paths:
       - 'src/**'
-      - 'prisma/**'
       - 'package.json'
       - 'tsconfig.json'
       - '.github/workflows/backend-ci.yml'
@@ -17,19 +17,10 @@ jobs:
     runs-on: ubuntu-latest
     
     services:
-      postgres:
-        image: postgres:15-alpine
-        env:
-          POSTGRES_USER: test_user
-          POSTGRES_PASSWORD: test_pass
-          POSTGRES_DB: finflow_test
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+      mongodb:
+        image: mongo:6-jammy
         ports:
-          - 5432:5432
+          - 27017:27017
 
       redis:
         image: redis:7-alpine
@@ -54,16 +45,13 @@ jobs:
     - name: Install dependencies
       run: npm install
 
-    - name: Generate Prisma Client
-      run: npx prisma generate
-
     - name: Lint Codebase
       run: npm run lint
 
     - name: Run Tests
       run: npm run test
       env:
-        DATABASE_URL: postgresql://test_user:test_pass@localhost:5432/finflow_test
+        DATABASE_URL: mongodb://127.0.0.1:27017/finflow_test
         REDIS_HOST: localhost
         REDIS_PORT: 6379
         JWT_ACCESS_SECRET: test_secret_access
@@ -74,3 +62,4 @@ jobs:
 
     - name: Build Application
       run: npm run build
+

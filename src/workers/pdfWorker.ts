@@ -38,12 +38,22 @@ export const pdfWorker = new Worker(
 
       // Fetch all system categories to map them
       const categories = await Category.find();
-      const categoryMap = new Map(categories.map(c => [c.name.toLowerCase(), c._id]));
+      const categoryMap = new Map(categories.map(c => [c.name.toLowerCase().trim(), c._id]));
+      const otherCatId = categoryMap.get('other') || null;
 
       // 3. Batch insert using Transaction.insertMany
       const docsToInsert = transactions.map(t => {
-        const extractedCat = t.category?.toLowerCase() || '';
-        const categoryId = categoryMap.get(extractedCat) || null;
+        const rawCat = (t.category || '').toLowerCase().trim();
+        let categoryId = categoryMap.get(rawCat) || null;
+        if (!categoryId) {
+          for (const [name, id] of categoryMap.entries()) {
+            if (rawCat.includes(name) || name.includes(rawCat)) {
+              categoryId = id;
+              break;
+            }
+          }
+        }
+        if (!categoryId) categoryId = otherCatId;
 
         return {
           userId,

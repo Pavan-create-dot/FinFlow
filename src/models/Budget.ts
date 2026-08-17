@@ -22,14 +22,15 @@ const budgetSchema = new Schema<IBudget>(
       transform: (_doc: any, ret: Record<string, any>) => {
         ret.id = ret._id ? ret._id.toString() : ret.id;
         if (ret.userId) ret.userId = ret.userId.toString();
-        if (ret.categoryId && typeof ret.categoryId === 'object' && ret.categoryId._id) {
+        if (ret.categoryId && typeof ret.categoryId === 'object') {
+          const catId = (ret.categoryId.id || ret.categoryId._id || '').toString();
           ret.category = {
-            id: ret.categoryId._id.toString(),
+            id: catId,
             name: ret.categoryId.name,
             color: ret.categoryId.color,
             icon: ret.categoryId.icon,
           };
-          ret.categoryId = ret.categoryId._id.toString();
+          ret.categoryId = catId;
         } else if (ret.categoryId) {
           ret.categoryId = ret.categoryId.toString();
         }
@@ -43,14 +44,15 @@ const budgetSchema = new Schema<IBudget>(
       transform: (_doc: any, ret: Record<string, any>) => {
         ret.id = ret._id ? ret._id.toString() : ret.id;
         if (ret.userId) ret.userId = ret.userId.toString();
-        if (ret.categoryId && typeof ret.categoryId === 'object' && ret.categoryId._id) {
+        if (ret.categoryId && typeof ret.categoryId === 'object') {
+          const catId = (ret.categoryId.id || ret.categoryId._id || '').toString();
           ret.category = {
-            id: ret.categoryId._id.toString(),
+            id: catId,
             name: ret.categoryId.name,
             color: ret.categoryId.color,
             icon: ret.categoryId.icon,
           };
-          ret.categoryId = ret.categoryId._id.toString();
+          ret.categoryId = catId;
         } else if (ret.categoryId) {
           ret.categoryId = ret.categoryId.toString();
         }

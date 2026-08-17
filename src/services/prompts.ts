@@ -1,31 +1,41 @@
 export const TRANSACTION_EXTRACTION_PROMPT = `
-You are a high-precision financial data extractor. Your task is to extract transaction details from the provided bank statement text.
+You are a high-precision financial data extractor and categorizer. Your task is to extract every transaction from the provided bank/UPI statement text (including PhonePe, GPay, Paytm, Bank statements).
 
 Rules:
 1. Return ONLY a valid JSON array of objects. Do not include markdown formatting or explanations.
 2. For each transaction, extract:
-   - "date": Use ISO 8601 format (YYYY-MM-DD). If year is missing, assume 2024.
-   - "amount": The transaction value in Paise (Integer). E.g., 50.75 becomes 5075. 100 becomes 10000.
-   - "description": The raw original description from the statement.
-   - "merchantName": A cleaned, human-readable merchant name (e.g., "Uber", "Amazon", "Starbucks").
-   - "type": "EXPENSE" if money left the account, "INCOME" if money entered.
-   - "isSubscription": Boolean. True if it looks like a recurring subscription (e.g., Netflix, Spotify, AWS, Rent).
-   - "category": The category name, which MUST be one of: "Food & Dining", "Shopping", "Transportation", "Housing", "Subscriptions", "Entertainment", "Health", "Investments", "Salary", or "Other".
+   - "date": Use ISO 8601 format (YYYY-MM-DD). Parse formats like "Aug 17, 2026", "17 Aug 2025", "17/08/2026", etc.
+   - "amount": The transaction value in Paise (Integer). E.g., ₹50 becomes 5000, ₹5.50 becomes 550, ₹5,954 becomes 595400, ₹20,000 becomes 2000000.
+   - "description": The raw original description (e.g., "Paid to RAMA STORES", "Received from Amma", "Mobile recharged 9966577205").
+   - "merchantName": Cleaned name of the recipient/sender or merchant (e.g., "Rama Stores", "Amazon India", "Amma", "Rapido", "APSRTC").
+   - "type": "EXPENSE" if money left the account ("Paid to", "DEBIT", "Transfer to", "Recharge", "Payment to"), or "INCOME" if money entered ("Received from", "CREDIT", "Refund", "Deposit").
+   - "isSubscription": Boolean. True for recurring services, mobile recharges, Netflix, Spotify, OpenAI, etc.
+   - "category": MUST be strictly one of these 10 categories based on the context:
+     * "Food & Dining": Restaurants, food, bakeries, tea/coffee, snacks, soda, Swiggy, Zomato, mess, fast food.
+     * "Shopping": General stores, kirana, provision stores (e.g., Rama Stores, Keerthi General Store), Amazon, Flipkart, retail, personal care/haircuts (e.g., Snap cut).
+     * "Transportation": Bus, cab, auto, train, metro, APSRTC, Rapido, Uber, Ola, petrol/fuel.
+     * "Housing": Room rent (e.g., Balaji Vit Room, Dinesh Vit Room), hostel, electricity, maintenance.
+     * "Subscriptions": Mobile recharge (e.g., Vi, Jio, Airtel), software/AI (OpenAI), OTT (Netflix, Spotify).
+     * "Entertainment": Movies, theaters, events, games.
+     * "Health": Pharmacy, medicines, doctor, clinic, hospital.
+     * "Investments": Chit funds, cooperatives (e.g. Stree Nidhi Credit Cooperative Federation), mutual funds, stocks.
+     * "Salary": Salary deposits, wages from employer.
+     * "Other": University/college fees (e.g., Vellore Institute of Technology), person-to-person transfers to friends/family (e.g. Amma, friends), miscellaneous.
 
 Schema Example:
 [
   {
-    "date": "2024-03-15",
-    "amount": 49900,
-    "description": "NETFLIX.COM BEVERLY HILLS CA",
-    "merchantName": "Netflix",
+    "date": "2026-08-17",
+    "amount": 5000,
+    "description": "Paid to RAMA STORES DEBIT ₹50",
+    "merchantName": "RAMA STORES",
     "type": "EXPENSE",
-    "isSubscription": true,
-    "category": "Subscriptions"
+    "isSubscription": false,
+    "category": "Shopping"
   }
 ]
 
-Process the following text carefully:
+Process the following text carefully and extract ALL transactions:
 `;
 
 export const FINANCIAL_INSIGHTS_PROMPT = `
