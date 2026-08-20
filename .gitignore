@@ -1,27 +1,18 @@
 # Dependencies
 node_modules/
-frontend/node_modules/
 
-# Build outputs
+# Build artifacts – auto-generated, not for source control
 dist/
-frontend/dist/
 
-# Environment files — NEVER commit secrets
+# Environment variables – never commit secrets!
 .env
-.env.local
-.env.production
+backend/.env
 
-# Uploaded files (user data)
-uploads/
+# Uploads – keep directory, ignore all uploaded files
+uploads/*
+!uploads/.gitkeep
 
-# Logs
-*.log
-npm-debug.log*
-
-# OS files
+# Editor artifacts
 .DS_Store
 Thumbs.db
-
-# Editor
-.vscode/
-.idea/
+*.log
