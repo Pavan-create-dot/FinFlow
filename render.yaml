@@ -1,21 +1,16 @@
 services:
-  # 1. Express API Web Service
   - type: web
     name: finflow-api
     runtime: node
     plan: free
-    buildCommand: npm install --include=dev && npm run build
-    startCommand: npm start
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node server.js
     envVars:
       - key: PORT
         value: 3000
       - key: NODE_ENV
         value: production
-      - key: REDIS_URL
-        fromService:
-          type: redis
-          name: finflow-redis
-          property: connectionString
       - key: DATABASE_URL
         sync: false
       - key: GEMINI_API_KEY
@@ -28,9 +23,3 @@ services:
         sync: false
       - key: FRONTEND_URL
         sync: false
-
-  # 2. Managed Redis Instance
-  - type: redis
-    name: finflow-redis
-    plan: free
-    ipAllowList: []
