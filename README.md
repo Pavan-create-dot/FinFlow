@@ -1,6 +1,18 @@
 # 💸 FinFlow — Personal Finance Tracker
 
-> **A full-stack, secure personal finance management platform featuring automated bank statement parsing, real-time spending analytics, budget tracking, savings goal management, and an interactive AI financial advisor.**
+> **A full-stack, secure personal finance management platform featuring automated bank statement parsing, real-time spending analytics, Redis caching, budget tracking, savings goal management, and an interactive AI financial advisor.**
+
+🚀 **Live Application Demo**: [https://fin-flow-five-orcin.vercel.app/](https://fin-flow-five-orcin.vercel.app/)
+
+---
+
+## 📸 Screenshots & UI Showcase
+
+| View | Screenshot | Description |
+|---|---|---|
+| **User Authentication** | ![FinFlow Login Screen](docs/screenshots/login.png) | Secure JWT login & registration modal with password toggle and field validation. |
+| **Financial Dashboard** | ![FinFlow Analytics Dashboard](docs/screenshots/dashboard.png) | Real-time overview of income, expenses, cash flow, top categories, and financial health score. |
+| **AI Advisory & Chat** | ![FinAI Financial Advisor](docs/screenshots/ai-advisory.png) | Contextual data-driven spend analysis, spending anomaly alerts, and interactive AI assistant powered by Gemini. |
 
 ---
 
@@ -11,22 +23,26 @@
 - **Financial Health Score Algorithm**: Dynamic 0–100 scoring model evaluating income-to-expense ratios, savings rates, and budget adherence with actionable health indicators.
 - **Visual Analytics**: Interactive bar charts and category distribution visualizers built with Recharts.
 
-### 2. 🤖 Gemini AI Financial Advisory (`FinAI`)
-- **Data-Driven Insights**: Integrated Google Gemini 2.5 Flash API to analyze user transaction patterns and generate context-aware savings recommendations.
-- **Spending Anomaly Alerts**: Automatic detection of unusual transaction spikes or budget overspends.
+### 2. ⚡ Redis Caching Layer
+- **Dashboard Acceleration**: Integrates Redis caching for aggregate analytics queries (`/api/v1/analytics/summary`) to reduce MongoDB database workload and optimize client load speeds.
+- **Automatic Invalidation**: Smart cache invalidation whenever new transactions are created, modified, or deleted.
+
+### 3. 🤖 Gemini AI Financial Advisory (`FinAI`)
+- **Data-Driven Recommendations**: Integrated Google Gemini 2.5 Flash API to analyze user transaction patterns and generate context-aware savings recommendations.
+- **Spending Anomaly Alerts**: Automatic detection of unusual transaction spikes or category overspends.
 - **Conversational Assistant**: Interactive chat interface (`FinAI`) trained on user-specific transactional context to answer custom financial queries (*"Where did I overspend?"*, *"Can I afford a ₹50,000 laptop?"*).
 
-### 3. 📄 Bank Statement Parsing Engine
+### 4. 📄 Bank Statement Parsing Engine
 - **PDF Statement Parsing**: Drag-and-drop PDF upload pipeline using `pdf-parse`.
-- **Structured Extraction**: Gemini AI parses raw text into structured JSON transactions (date, amount, merchant, category).
+- **Structured Extraction**: Gemini AI parses raw statement text into structured JSON transactions (date, amount, merchant, category).
 - **Smart Fallback Parser**: Built-in regex fallback parser optimized for Indian banking & UPI patterns (PhonePe, Paytm, Google Pay, GPay) ensuring high parsing reliability even if AI rate limits occur.
 
-### 4. 🔐 Security & Privacy Architecture
+### 5. 🔐 Security & Privacy Architecture
 - **Stateless JWT Auth**: Dual-token strategy (access + refresh tokens) with secure middleware route protection.
-- **Password Hashing**: Industry-standard `bcryptjs` hashing (cost factor 12).
+- **Password Hashing**: Industry-standard `bcryptjs` password hashing (cost factor 12).
 - **AES-256-GCM Encryption**: Field-level encryption for sensitive transaction descriptions and merchant names stored at rest in MongoDB.
 
-### 5. 🎯 Budgets & Savings Goals Management
+### 6. 🎯 Budgets & Savings Goals Management
 - **Category-Based Budgets**: Set spending limits per category with real-time progress bars and overspend alerts.
 - **Savings Goals Tracker**: Define target savings goals, monitor current progress, track deadlines, and update contributions dynamically.
 
@@ -36,21 +52,22 @@
 
 ```
                                   ┌─────────────────────────┐
-                                  │      React + Vite       │
+                                  │       React.js          │
                                   │   Glassmorphic UI Client │
+                                  │     (Deployed Vercel)   │
                                   └────────────┬────────────┘
                                                │ REST APIs (Axios)
                                                ▼
                                   ┌─────────────────────────┐
                                   │   Node.js + Express API │
-                                  │      (Port 3000)        │
+                                  │     (Deployed Render)   │
                                   └──────┬────────────┬─────┘
                                          │            │
                          AES-256 Encrypted            │ Gemini 2.5 Flash API
                                          ▼            ▼
                               ┌──────────────┐   ┌─────────────────┐
                               │   MongoDB    │   │  Google Gemini  │
-                              │  Database    │   │   AI Service    │
+                              │ & Redis Cache│   │   AI Service    │
                               └──────────────┘   └─────────────────┘
 ```
 
@@ -61,20 +78,23 @@
 ```
 FinFlow/
 ├── backend/                 ← Express API Server & Business Logic
-│   ├── config/              ← DB Connection setup (MongoDB)
+│   ├── config/              ← DB Connection (MongoDB) & Redis Caching service
 │   ├── middleware/          ← JWT Authentication guard & error handlers
-│   ├── models/              ← Mongoose Database Schemas (User, Transaction, Budget, etc.)
+│   ├── models/              ← Mongoose Database Schemas (User, Transaction, Budget, Goal, Statement)
 │   ├── routes/              ← REST API Endpoints (Auth, Transactions, Statements, AI, Goals)
 │   ├── services/            ← Gemini AI integration & AES-256 encryption engine
-│   └── server.js            ← Backend entry point
+│   └── server.js            ← Backend Express entry point
 │
-├── frontend/                ← React + Vite Client Application
+├── frontend/                ← React Client Application (ES6+ JavaScript)
 │   ├── src/
 │   │   ├── components/      ← Reusable UI Components (Charts, Modals, Tables, AI Advisory)
 │   │   ├── context/         ← React Auth Context for JWT state
 │   │   ├── pages/           ← Main views (Dashboard, Transactions, Budgets, Subscriptions, AI Advisory)
 │   │   └── services/        ← Axios API client
 │   └── index.css            ← Glassmorphic UI CSS design system
+│
+├── docs/                    ← Project documentation & screenshots
+│   └── screenshots/         ← Screenshots for repository showcase
 │
 └── uploads/                 ← Secure temporary storage for statement processing
 ```
@@ -94,7 +114,7 @@ FinFlow/
 |---|---|---|
 | `GET` | `/api/v1/transactions` | Query filtered, sorted, and paginated transactions |
 | `POST` | `/api/v1/transactions` | Create manual transaction record |
-| `GET` | `/api/v1/analytics/summary` | Fetch financial summary, health score, and trends |
+| `GET` | `/api/v1/analytics/summary` | Fetch financial summary, health score, and trends (Redis cached) |
 
 ### 📄 Statement Parser
 | Method | Endpoint | Description |
@@ -158,8 +178,10 @@ npm run dev
 
 | Layer | Technology |
 |---|---|
-| **Frontend** | React 18, Vite, TypeScript, Recharts, Lucide Icons |
-| **Backend** | Node.js, Express.js |
+| **Frontend** | React.js (ES6+ JavaScript), HTML5, CSS3 (Glassmorphic Design), Recharts, Lucide Icons |
+| **Backend** | Node.js, Express.js RESTful API |
+| **Caching** | Redis Caching (Dashboard metrics acceleration) |
 | **Database** | MongoDB with Mongoose ODM |
-| **AI Engine** | Google Gemini 2.5 Flash API |
-| **Security** | AES-256-GCM Encryption, JWT Authentication, Bcrypt Password Hashing |
+| **AI Engine** | Google Gemini API (Gemini 2.5 Flash) |
+| **Security** | AES-256-GCM Field-Level Encryption, JWT Authentication, Bcrypt Password Hashing |
+| **Deployments** | Vercel (Frontend), Render (Backend) |
